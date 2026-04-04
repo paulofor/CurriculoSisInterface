@@ -40,6 +40,11 @@ public class DummyDaoBase extends DaoBase {
 
 
 	@Override
+	protected int getNumPasso() {
+		return 0;
+	}
+
+	@Override
 	protected IDatasetComum criaDataSet() {
 		return null;
 	}
