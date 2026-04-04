@@ -29,7 +29,7 @@ import com.ning.http.client.AsyncHttpClientConfig;
 import com.ning.http.client.HttpResponseStatus;
 import com.ning.http.client.ProxyServer;
 import com.ning.http.client.Response;
-import com.ning.http.client.multipart.FilePart;
+import com.ning.http.client.FilePart;
 import com.strongloop.android.remoting.JsonUtil;
 import com.strongloop.android.util.Log;
 
@@ -367,7 +367,7 @@ public class RestAdapter extends Adapter {
 				}
 			}
 
-			BoundRequestBuilder request = prepareRequest(method, baseUrl + path).setRequestTimeout(300000);
+			BoundRequestBuilder request = prepareRequest(method, baseUrl + path);
 
 			HttpParams httpParams = new BasicHttpParams();
 		    ConnManagerParams.setTimeout(httpParams, 1200000);
@@ -385,7 +385,7 @@ public class RestAdapter extends Adapter {
 				if ("GET".equalsIgnoreCase(method) || "HEAD".equalsIgnoreCase(method)
 						|| "DELETE".equalsIgnoreCase(method)) {
 					for (Map.Entry<String, ? extends Object> entry : flattenParameters(parameters).entrySet()) {
-						request.addQueryParam(entry.getKey(), String.valueOf(entry.getValue()));
+						request.addQueryParameter(entry.getKey(), String.valueOf(entry.getValue()));
 					}
 				}
 				// Encodes A POST or PUT request
@@ -396,7 +396,7 @@ public class RestAdapter extends Adapter {
 					contentType = "application/x-www-form-urlencoded; charset=" + charset;
 					// TODO: Set body param properly
 					for (Map.Entry<String, ? extends Object> entry : parameters.entrySet()) {
-						request.addFormParam(entry.getKey(), String.valueOf(entry.getValue()));
+						request.addParameter(entry.getKey(), String.valueOf(entry.getValue()));
 					}
 
 				} else if (parameterEncoding == ParameterEncoding.FORM_MULTIPART) {
@@ -409,7 +409,7 @@ public class RestAdapter extends Adapter {
 						Object value = entry.getValue();
 						if (value != null) {
 							if (value instanceof java.io.File) {
-								request.addBodyPart(new FilePart(entry.getKey(), (File) value));
+								request.addBodyPart(new FilePart(entry.getKey(), (File) value, null, null));
 							} else if (value instanceof StreamParam) {
 								try {
 									((StreamParam) value).putTo(request, entry.getKey());
@@ -419,7 +419,7 @@ public class RestAdapter extends Adapter {
 									e.printStackTrace();
 								}
 							} else if (value instanceof String) {
-								request.addFormParam(entry.getKey(), (String) entry.getValue());
+								request.addParameter(entry.getKey(), (String) entry.getValue());
 							} else {
 								throw new IllegalArgumentException(
 										"Unknown param type for RequestParams: " + value.getClass().getName());
@@ -454,22 +454,26 @@ public class RestAdapter extends Adapter {
 			ProxyServer proxy = new ProxyServer("10.21.7.10", 82, "tr626987", "Mclaren1");
 			// request.setProxyServer(proxy);
 
-			if ("GET".equalsIgnoreCase(method)) {
-				this.getConfig().getConnectTimeout();
-				request.execute(httpCallback);
-				// get(context, url, headers, null, httpCallback);
-			} else if ("DELETE".equalsIgnoreCase(method)) {
-				request.execute(httpCallback);
-				// delete(context, url, headers, httpCallback);
-			} else if ("POST".equalsIgnoreCase(method)) {
-				request.addHeader("Content-Type", contentType);
- 				request.execute(httpCallback);
-			} else if ("PUT".equalsIgnoreCase(method)) {
-				request.addHeader("Content-Type", contentType);
-				request.execute(httpCallback);
-			} else {
-				throw new IllegalArgumentException(
-						"Illegal method: " + method + ". Only GET, POST, PUT, DELETE supported.");
+			try {
+				if ("GET".equalsIgnoreCase(method)) {
+					this.getConfig().getConnectionTimeoutInMs();
+					request.execute(httpCallback);
+					// get(context, url, headers, null, httpCallback);
+				} else if ("DELETE".equalsIgnoreCase(method)) {
+					request.execute(httpCallback);
+					// delete(context, url, headers, httpCallback);
+				} else if ("POST".equalsIgnoreCase(method)) {
+					request.addHeader("Content-Type", contentType);
+	 				request.execute(httpCallback);
+				} else if ("PUT".equalsIgnoreCase(method)) {
+					request.addHeader("Content-Type", contentType);
+					request.execute(httpCallback);
+				} else {
+					throw new IllegalArgumentException(
+							"Illegal method: " + method + ". Only GET, POST, PUT, DELETE supported.");
+				}
+			} catch (IOException e) {
+				throw new RuntimeException("Erro ao executar requisição HTTP", e);
 			}
 
 		}

@@ -7,7 +7,7 @@ import java.io.InputStream;
 import org.apache.commons.io.IOUtils;
 
 import com.ning.http.client.AsyncHttpClient;
-import com.ning.http.client.multipart.ByteArrayPart;
+import com.ning.http.client.ByteArrayPart;
 
 /**
  * A request parameter that is a (binary) stream.
@@ -29,7 +29,7 @@ public class StreamParam {
 
     public void putTo(AsyncHttpClient.BoundRequestBuilder requestBuilder, String key) throws IOException {
         byte[] bytes = IOUtils.toByteArray(stream);
-        ByteArrayPart arrayPart = new ByteArrayPart(key, bytes, contentType, null, fileName);
+        ByteArrayPart arrayPart = new ByteArrayPart(key, fileName, bytes, contentType, null);
         requestBuilder.addBodyPart(arrayPart);
     }
 }
