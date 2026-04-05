@@ -15,8 +15,8 @@ jobs:
 
     env:
       VPS_HOST: 187.45.254.75
+      VPS_PORT: ${{ secrets.VPS_PORTA }}
       VPS_USER: ${{ secrets.VPS_USUARIO }}
-      VPS_PASSWORD: ${{ secrets.VPS_SENHA }}
       VPS_PUBLIC_DIR: ${{ secrets.VPS_DIRETORIO_PUBLICO }}
 
     steps:
@@ -51,8 +51,17 @@ jobs:
           echo "jar_path=$JAR_PATH" >> "$GITHUB_OUTPUT"
           echo "Jar selecionado: $JAR_PATH"
 
-      - name: Install sshpass
-        run: sudo apt-get update && sudo apt-get install -y sshpass
+      - name: Configure SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_CHAVE_PRIVADA_SSH }}
+
+      - name: Add VPS to known_hosts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "${VPS_PORT:-22}" "$VPS_HOST" >> ~/.ssh/known_hosts
 
       - name: Upload jar to public VPS directory
         shell: bash
@@ -64,18 +73,17 @@ jobs:
             exit 1
           fi
 
-          if [ -z "${VPS_PASSWORD:-}" ]; then
-            echo "Defina o secret VPS_SENHA (senha SSH do servidor)." >&2
+          if [ -z "${{ secrets.VPS_CHAVE_PRIVADA_SSH }}" ]; then
+            echo "Defina o secret VPS_CHAVE_PRIVADA_SSH (chave privada SSH)." >&2
             exit 1
           fi
 
           TARGET_DIR="${VPS_PUBLIC_DIR:-/var/www/html}"
+          SSH_PORT="${VPS_PORT:-22}"
           JAR_PATH='${{ steps.jar.outputs.jar_path }}'
 
-          sshpass -p "$VPS_PASSWORD" ssh -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" \
-            "mkdir -p '$TARGET_DIR'"
+          ssh -p "$SSH_PORT" "$VPS_USER@$VPS_HOST" "mkdir -p '$TARGET_DIR'"
 
-          sshpass -p "$VPS_PASSWORD" scp -o StrictHostKeyChecking=no "$JAR_PATH" \
-            "$VPS_USER@$VPS_HOST:$TARGET_DIR/"
+          scp -P "$SSH_PORT" "$JAR_PATH" "$VPS_USER@$VPS_HOST:$TARGET_DIR/"
 
           echo "Deploy concluído para $VPS_USER@$VPS_HOST:$TARGET_DIR"
