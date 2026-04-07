@@ -2,15 +2,11 @@ package gerador.obtemoportunidadelinkedin.passo.impl;
 
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,7 +14,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -26,7 +21,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
@@ -76,60 +70,41 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
 
             // Navegar para a página de busca de vagas
             driver.get("https://www.linkedin.com/jobs");
-            wait.until(ExpectedConditions.or(
-            	ExpectedConditions.urlContains("linkedin.com/jobs"),
-            	ExpectedConditions.presenceOfElementLocated(By.tagName("body"))
-            ));
-            salvarCopiaPagina("jobs-inicial");
 
-            // Inserir termo de pesquisa e buscar (com aprendizado/resiliência)
-            boolean pesquisouNoCampo = false;
-            try {
-            	WebElement searchBox = encontraCampoBusca(wait);
-            	searchBox.click();
-            	searchBox.sendKeys(Keys.chord(Keys.CONTROL, "a"), Keys.DELETE);
-            	searchBox.sendKeys(palavraPesquisaCorrente.getPalavra());
-            	searchBox.sendKeys(Keys.RETURN);
-            	pesquisouNoCampo = true;
-            } catch (Exception ex) {
-            	System.out.println("Campo de busca não encontrado. Tentando navegação direta por URL de pesquisa...");
-            	salvarCopiaPagina("erro-sem-campo-busca");
-            }
-
-            if (!pesquisouNoCampo) {
-            	String termo = URLEncoder.encode(palavraPesquisaCorrente.getPalavra(), StandardCharsets.UTF_8);
-            	driver.get("https://www.linkedin.com/jobs/search/?keywords=" + termo + "&sortBy=DD");
-            }
+            // Inserir termo de pesquisa e buscar
+            WebElement searchBox = encontraCampoBusca(wait);
+            searchBox.clear();
+            searchBox.sendKeys(palavraPesquisaCorrente.getPalavra());
+            searchBox.sendKeys(Keys.RETURN);
 
             // Esperar resultados de pesquisa
-            wait.until(ExpectedConditions.or(
-            	ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector("a.job-card-container__link")),
-            	ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector("li.scaffold-layout__list-item")),
-            	ExpectedConditions.urlContains("/jobs/search")
-            ));
-            TimeUnit.SECONDS.sleep(4);
-            salvarCopiaPagina("jobs-resultado");
+            TimeUnit.SECONDS.sleep(5);
+
+            // Coletar descrições de vagas
+            
 
             this.saidaListaOportunidade = new ArrayList<OportunidadeLinkedin>();
             adicionaItens(palavraPesquisaCorrente);
 
 			for (int pagina = 2; pagina <= 15; pagina++) {
+				// Localiza o botão pelo atributo aria-label usando XPath
 				try {
 					WebElement button = driver.findElement(By.xpath("//button[@aria-label='Página " + pagina + "']"));
 					if (button != null) {
 						button.click();
-						TimeUnit.SECONDS.sleep(4);
+						TimeUnit.SECONDS.sleep(5);
 						adicionaItens(palavraPesquisaCorrente);
 					}
 				} catch (NoSuchElementException e) {
-					// fim da paginação
+
 				}
 
 			}
+            
+           
             return true;
         } catch (Exception e) {
             e.printStackTrace();
-            salvarCopiaPagina("erro-geral");
             return false;
         } finally {
             // Fechar o navegador
@@ -142,9 +117,8 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
 		By[] tentativas = {
 			By.cssSelector("input.jobs-search-box__text-input"),
 			By.cssSelector("input.jobs-search-box__keyboard-text-input"),
-			By.cssSelector("input[aria-label*='cargo'], input[aria-label*='título'], input[aria-label*='Pesquisar'], input[aria-label*='title'], input[aria-label*='Search']"),
-			By.cssSelector("input[id*='jobs-search-box-keyword-id']"),
-			By.xpath("//input[contains(@placeholder,'Pesquisar') or contains(@placeholder,'cargo') or contains(@placeholder,'title') or contains(@placeholder,'Search')]")
+			By.xpath("//input[contains(@aria-label,'Pesquisar') or contains(@aria-label,'Search by title')]"),
+			By.xpath("//input[contains(@id,'jobs-search-box-keyword-id')]")
 		};
 
 		for (By localizador : tentativas) {
@@ -154,36 +128,7 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
 			}
 		}
 
-		List<WebElement> inputs = driver.findElements(By.cssSelector("input[type='text'], input[type='search']"));
-		return inputs.stream()
-				.filter(WebElement::isDisplayed)
-				.max(Comparator.comparingInt(this::pontuacaoCampoBusca))
-				.filter(el -> pontuacaoCampoBusca(el) > 0)
-				.orElseThrow(() -> new NoSuchElementException("Campo de busca de vagas do LinkedIn não encontrado"));
-	}
-
-	private int pontuacaoCampoBusca(WebElement el) {
-		String texto = (el.getAttribute("aria-label") + " " + el.getAttribute("placeholder") + " " + el.getAttribute("id") + " " + el.getAttribute("class")).toLowerCase();
-		int pontos = 0;
-		if (texto.contains("cargo") || texto.contains("vaga") || texto.contains("palavra")) pontos += 4;
-		if (texto.contains("title") || texto.contains("keyword") || texto.contains("search")) pontos += 4;
-		if (texto.contains("jobs")) pontos += 2;
-		if (Boolean.TRUE.equals(((JavascriptExecutor) driver).executeScript("return arguments[0]===document.activeElement", el))) pontos += 1;
-		return pontos;
-	}
-
-	private void salvarCopiaPagina(String marcador) {
-		if (driver == null) return;
-		try {
-			Path pasta = Paths.get(System.getProperty("java.io.tmpdir"), "linkedin-debug");
-			Files.createDirectories(pasta);
-			String ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
-			Path arquivo = pasta.resolve(ts + "-" + marcador + ".html");
-			Files.writeString(arquivo, driver.getPageSource(), StandardCharsets.UTF_8);
-			System.out.println("Cópia da página salva em: " + arquivo);
-		} catch (Exception e) {
-			System.out.println("Falha ao salvar cópia da página: " + e.getMessage());
-		}
+		throw new NoSuchElementException("Campo de busca de vagas do LinkedIn não encontrado");
 	}
 
 	private void configuraChromeDriver() {
@@ -369,11 +314,15 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
 
              try {
                  WebElement description = driver.findElement(By.id("job-details"));
+                 //System.out.println("Descrição da Vaga:");
                  System.out.println(description.getText());
                  novo.setDescricao(description.getText());
+                 //System.out.println("----");
                  System.out.println();
                  
+                 // Localiza o elemento <a> pela posição no DOM
                  WebElement jobLinkElement = driver.findElement(By.xpath("//div[contains(@class, 'job-details-jobs-unified-top-card__job-title')]//h1[@class='t-24 t-bold inline']/a"));
+                 // Extrai o valor do atributo href
                  String jobLinkUrl = jobLinkElement.getAttribute("href");
                  String baseUrl = jobLinkUrl.split("\\?")[0];
                  System.out.println("Job Link URL: " + baseUrl);
@@ -382,14 +331,17 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
                  String jobTitleText = jobTitleElement.getText();
                  System.out.println("Job Title: " + jobTitleText);
                  
+                 // Localiza o elemento que contém "Capco" pela posição no DOM
                  WebElement companyNameElement = driver.findElement(By.xpath("//div[contains(@class, 'job-details-jobs-unified-top-card__company-name')]//a"));
                  String companyNameText = companyNameElement.getText();
                  System.out.println("Company Name: " + companyNameText);
                  
+                 // Localiza o elemento que contém "há 3 dias" pela posição no DOM
                  WebElement diasElement = driver.findElement(By.xpath("(//div[contains(@class, 'job-details-jobs-unified-top-card__primary-description-container')]//span[@class='tvm__text tvm__text--low-emphasis'])[3]"));
                  String diasText = diasElement.getText();
                  System.out.println("Tempo: " + diasText);
 
+                 // Localiza o elemento que contém "68 candidaturas" pela posição no DOM
                  String candidaturasText = "0";
                  try {
                 	 WebElement candidaturasElement = driver.findElement(By.xpath("(//div[contains(@class, 'job-details-jobs-unified-top-card__primary-description-container')]//span[@class='tvm__text tvm__text--low-emphasis'])[5]"));
