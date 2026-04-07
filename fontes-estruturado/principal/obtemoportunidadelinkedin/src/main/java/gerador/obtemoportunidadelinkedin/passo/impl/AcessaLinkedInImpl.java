@@ -4,6 +4,7 @@ package gerador.obtemoportunidadelinkedin.passo.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.nio.file.Files;
@@ -25,6 +26,8 @@ import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import br.com.gersis.loopback.modelo.OportunidadeLinkedin;
 import br.com.gersis.loopback.modelo.PalavraRaiz;
@@ -51,27 +54,26 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
 
         // Inicializar o navegador
         driver = new ChromeDriver();
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
 
         try {
             // Acessar a página de login do LinkedIn
             driver.get("https://www.linkedin.com/login");
 
             // Fazer login
-            WebElement emailField = driver.findElement(By.id("username"));
+            WebElement emailField = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("username")));
             emailField.sendKeys("paulofore@gmail.com");
 
             WebElement passwordField = driver.findElement(By.id("password"));
             passwordField.sendKeys("xi5*4NDGrb^+Z6T");
             passwordField.sendKeys(Keys.RETURN);
 
-            // Esperar até que a página principal seja carregada
-            driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-
             // Navegar para a página de busca de vagas
             driver.get("https://www.linkedin.com/jobs");
 
             // Inserir termo de pesquisa e buscar
-            WebElement searchBox = driver.findElement(By.className("jobs-search-box__text-input"));
+            WebElement searchBox = encontraCampoBusca(wait);
+            searchBox.clear();
             searchBox.sendKeys(palavraPesquisaCorrente.getPalavra());
             searchBox.sendKeys(Keys.RETURN);
 
@@ -109,6 +111,24 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
             driver.quit();
         }
         
+	}
+
+	private WebElement encontraCampoBusca(WebDriverWait wait) {
+		By[] tentativas = {
+			By.cssSelector("input.jobs-search-box__text-input"),
+			By.cssSelector("input.jobs-search-box__keyboard-text-input"),
+			By.xpath("//input[contains(@aria-label,'Pesquisar') or contains(@aria-label,'Search by title')]"),
+			By.xpath("//input[contains(@id,'jobs-search-box-keyword-id')]")
+		};
+
+		for (By localizador : tentativas) {
+			try {
+				return wait.until(ExpectedConditions.elementToBeClickable(localizador));
+			} catch (Exception ignored) {
+			}
+		}
+
+		throw new NoSuchElementException("Campo de busca de vagas do LinkedIn não encontrado");
 	}
 
 	private void configuraChromeDriver() {
