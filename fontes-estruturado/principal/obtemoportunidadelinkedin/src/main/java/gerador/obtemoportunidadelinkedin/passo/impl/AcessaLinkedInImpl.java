@@ -4,7 +4,6 @@ package gerador.obtemoportunidadelinkedin.passo.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.time.Duration;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.nio.file.Files;
@@ -54,7 +53,7 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
 
         // Inicializar o navegador
         driver = new ChromeDriver();
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
+        WebDriverWait wait = new WebDriverWait(driver, 20);
 
         try {
             // Acessar a página de login do LinkedIn
