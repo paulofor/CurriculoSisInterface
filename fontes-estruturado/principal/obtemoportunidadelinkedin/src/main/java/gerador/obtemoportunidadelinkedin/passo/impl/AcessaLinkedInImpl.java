@@ -67,14 +67,8 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
             passwordField.sendKeys("xi5*4NDGrb^+Z6T");
             passwordField.sendKeys(Keys.RETURN);
 
-            // Navegar para a página de busca de vagas
-            driver.get("https://www.linkedin.com/jobs");
-
-            // Inserir termo de pesquisa e buscar
-            WebElement searchBox = encontraCampoBusca(wait);
-            searchBox.clear();
-            searchBox.sendKeys(palavraPesquisaCorrente.getPalavra());
-            searchBox.sendKeys(Keys.RETURN);
+            // Navegar para a página de busca de vagas de forma resiliente
+            pesquisarVagasInteligente(wait, palavraPesquisaCorrente.getPalavra());
 
             // Esperar resultados de pesquisa
             TimeUnit.SECONDS.sleep(5);
@@ -112,10 +106,60 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
         
 	}
 
+	private void pesquisarVagasInteligente(WebDriverWait wait, String palavra) throws InterruptedException {
+		String termo = palavra == null ? "" : palavra.trim();
+		if (termo.isEmpty()) {
+			throw new IllegalArgumentException("Palavra de busca vazia");
+		}
+
+		// Estratégia 1: URL direta de busca (menos sensível a mudanças de HTML).
+		String termoUrl = termo.replace(" ", "%20");
+		driver.get("https://www.linkedin.com/jobs/search/?keywords=" + termoUrl);
+		TimeUnit.SECONDS.sleep(3);
+
+		// Se a página carregou resultados/lista, não depende de campo de busca.
+		if (temResultadosOuLista()) {
+			return;
+		}
+
+		// Estratégia 2: abrir jobs e tentar campo de busca com múltiplos seletores.
+		driver.get("https://www.linkedin.com/jobs");
+		WebElement searchBox = encontraCampoBusca(wait);
+		searchBox.clear();
+		searchBox.sendKeys(termo);
+		searchBox.sendKeys(Keys.RETURN);
+		TimeUnit.SECONDS.sleep(3);
+
+		if (!temResultadosOuLista()) {
+			throw new NoSuchElementException("Não foi possível navegar para resultados de vagas no LinkedIn");
+		}
+	}
+
+	private boolean temResultadosOuLista() {
+		By[] indicadores = {
+			By.cssSelector("ul.jobs-search__results-list"),
+			By.cssSelector("div.scaffold-layout__list"),
+			By.cssSelector("li.jobs-search-results__list-item"),
+			By.cssSelector("a.job-card-container__link"),
+			By.cssSelector("div.job-card-list")
+		};
+		for (By indicador : indicadores) {
+			if (!driver.findElements(indicador).isEmpty()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private WebElement encontraCampoBusca(WebDriverWait wait) {
 		By[] tentativas = {
 			By.cssSelector("input.jobs-search-box__text-input"),
 			By.cssSelector("input.jobs-search-box__keyboard-text-input"),
+			By.cssSelector("input[aria-label*='Cargo']"),
+			By.cssSelector("input[aria-label*='título']"),
+			By.cssSelector("input[aria-label*='Title']"),
+			By.cssSelector("input[placeholder*='Pesquisar']"),
+			By.cssSelector("input[placeholder*='Search']"),
 			By.xpath("//input[contains(@aria-label,'Pesquisar') or contains(@aria-label,'Search by title')]"),
 			By.xpath("//input[contains(@id,'jobs-search-box-keyword-id')]")
 		};
@@ -127,7 +171,7 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
 			}
 		}
 
-		throw new NoSuchElementException("Campo de busca de vagas do LinkedIn não encontrado");
+		throw new NoSuchElementException("Campo de busca de vagas do LinkedIn não encontrado em nenhuma estratégia");
 	}
 
 	private void configuraChromeDriver() {
@@ -305,45 +349,67 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
 	
 	
 	private void adicionaItens(PalavraRaiz palavraRaiz) throws InterruptedException {
-    	List<WebElement> jobs = driver.findElements(By.className("job-card-container__link"));
+		By[] seletoresCards = {
+			By.className("job-card-container__link"),
+			By.cssSelector("li.jobs-search-results__list-item a"),
+			By.cssSelector("div.job-card-container a"),
+			By.cssSelector("a.job-card-list__title")
+		};
+		List<WebElement> jobs = localizarElementosPrimeiroDisponivel(seletoresCards);
     	 for (WebElement job : jobs) {
          	OportunidadeLinkedin novo = new OportunidadeLinkedin();
              job.click();
              TimeUnit.SECONDS.sleep(2);
 
              try {
-                 WebElement description = driver.findElement(By.id("job-details"));
-                 //System.out.println("Descrição da Vaga:");
-                 System.out.println(description.getText());
-                 novo.setDescricao(description.getText());
-                 //System.out.println("----");
+                 String descricaoTexto = obterTextoPrimeiroDisponivel(
+					By.id("job-details"),
+					By.cssSelector("div.jobs-description-content__text"),
+					By.cssSelector("article.jobs-description"),
+					By.cssSelector("div.jobs-box__html-content")
+				);
+                 System.out.println(descricaoTexto);
                  System.out.println();
                  
-                 // Localiza o elemento <a> pela posição no DOM
-                 WebElement jobLinkElement = driver.findElement(By.xpath("//div[contains(@class, 'job-details-jobs-unified-top-card__job-title')]//h1[@class='t-24 t-bold inline']/a"));
-                 // Extrai o valor do atributo href
+                 WebElement jobLinkElement = localizarElementoPrimeiroDisponivel(
+					By.xpath("//div[contains(@class, 'job-details-jobs-unified-top-card__job-title')]//h1//a"),
+					By.cssSelector("h1 a"),
+					By.cssSelector("a.job-details-jobs-unified-top-card__job-title-link")
+				);
                  String jobLinkUrl = jobLinkElement.getAttribute("href");
-                 String baseUrl = jobLinkUrl.split("\\?")[0];
+                 String baseUrl = jobLinkUrl == null ? "" : jobLinkUrl.split("\\?")[0];
                  System.out.println("Job Link URL: " + baseUrl);
                  
-                 WebElement jobTitleElement = driver.findElement(By.xpath("//div[contains(@class, 'job-details-jobs-unified-top-card__job-title')]//h1[@class='t-24 t-bold inline']/a"));
+                 WebElement jobTitleElement = localizarElementoPrimeiroDisponivel(
+					By.xpath("//div[contains(@class, 'job-details-jobs-unified-top-card__job-title')]//h1"),
+					By.cssSelector("h1.t-24"),
+					By.cssSelector("h1")
+				);
                  String jobTitleText = jobTitleElement.getText();
                  System.out.println("Job Title: " + jobTitleText);
                  
-                 // Localiza o elemento que contém "Capco" pela posição no DOM
-                 WebElement companyNameElement = driver.findElement(By.xpath("//div[contains(@class, 'job-details-jobs-unified-top-card__company-name')]//a"));
+                 WebElement companyNameElement = localizarElementoPrimeiroDisponivel(
+					By.xpath("//div[contains(@class, 'job-details-jobs-unified-top-card__company-name')]//a"),
+					By.cssSelector("div.job-details-jobs-unified-top-card__company-name a"),
+					By.cssSelector("a.topcard__org-name-link"),
+					By.cssSelector("span.jobs-unified-top-card__company-name")
+				);
                  String companyNameText = companyNameElement.getText();
                  System.out.println("Company Name: " + companyNameText);
                  
-                 // Localiza o elemento que contém "há 3 dias" pela posição no DOM
-                 WebElement diasElement = driver.findElement(By.xpath("(//div[contains(@class, 'job-details-jobs-unified-top-card__primary-description-container')]//span[@class='tvm__text tvm__text--low-emphasis'])[3]"));
-                 String diasText = diasElement.getText();
+                 String diasText = obterTextoPrimeiroDisponivel(
+					By.xpath("(//div[contains(@class, 'job-details-jobs-unified-top-card__primary-description-container')]//span[contains(@class,'low-emphasis')])[3]"),
+					By.cssSelector("span.jobs-unified-top-card__posted-date"),
+					By.xpath("//span[contains(.,'há ') or contains(.,'ago') or contains(.,'dia')]")
+				);
                  System.out.println("Tempo: " + diasText);
 
-                 // Localiza o elemento que contém "68 candidaturas" pela posição no DOM
                  String candidaturasText = "0";
                  try {
-                	 WebElement candidaturasElement = driver.findElement(By.xpath("(//div[contains(@class, 'job-details-jobs-unified-top-card__primary-description-container')]//span[@class='tvm__text tvm__text--low-emphasis'])[5]"));
+                	 WebElement candidaturasElement = localizarElementoPrimeiroDisponivel(
+						By.xpath("(//div[contains(@class, 'job-details-jobs-unified-top-card__primary-description-container')]//span[contains(@class,'low-emphasis')])[5]"),
+						By.xpath("//span[contains(translate(.,'CANDIDATURAS','candidaturas'),'candidatura') or contains(.,'applicant')]")
+					);
                 	 candidaturasText = candidaturasElement.getText();
                  } catch (NoSuchElementException err) {
                 	 System.out.println("Sem candidatoras");
@@ -351,7 +417,10 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
                  
                  String modelo = "";
                  try {
-                     WebElement remotoElement = driver.findElement(By.xpath("//li[contains(@class, 'job-details-jobs-unified-top-card__job-insight--highlight')]//span[@aria-hidden='true']"));
+                     WebElement remotoElement = localizarElementoPrimeiroDisponivel(
+						By.xpath("//li[contains(@class, 'job-details-jobs-unified-top-card__job-insight--highlight')]//span[@aria-hidden='true']"),
+						By.xpath("//li[contains(.,'Remoto') or contains(.,'Híbrido') or contains(.,'Presencial') or contains(.,'Remote') or contains(.,'Hybrid') or contains(.,'On-site')]")
+					);
                      modelo = remotoElement.getText();
                  } catch (NoSuchElementException err) {
                 	 System.out.println("Sem remoto");
@@ -360,7 +429,7 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
                  System.out.println("Candidaturas: " + candidaturasText);
                  System.out.println("Modelo: " + modelo);
                  
-                 novo.setDescricao(description.getText());
+	                 novo.setDescricao(descricaoTexto);
                  novo.setVolume(candidaturasText);
                  novo.setTempo(diasText);
                  novo.setTitulo(jobTitleText);
@@ -377,6 +446,34 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
              }
          }
     }
+
+	private List<WebElement> localizarElementosPrimeiroDisponivel(By... seletores) {
+		for (By seletor : seletores) {
+			List<WebElement> elementos = driver.findElements(seletor);
+			if (!elementos.isEmpty()) {
+				return elementos;
+			}
+		}
+		return new ArrayList<>();
+	}
+
+	private WebElement localizarElementoPrimeiroDisponivel(By... seletores) {
+		for (By seletor : seletores) {
+			List<WebElement> elementos = driver.findElements(seletor);
+			if (!elementos.isEmpty()) {
+				return elementos.get(0);
+			}
+		}
+		throw new NoSuchElementException("Elemento não encontrado com seletores dinâmicos");
+	}
+
+	private String obterTextoPrimeiroDisponivel(By... seletores) {
+		try {
+			return localizarElementoPrimeiroDisponivel(seletores).getText();
+		} catch (NoSuchElementException e) {
+			return "";
+		}
+	}
 
 
 }
