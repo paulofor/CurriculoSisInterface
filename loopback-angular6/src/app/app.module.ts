@@ -34,7 +34,6 @@ import { FileDropModule } from 'ngx-file-drop';
 import { ImageUploadModule } from "angular2-image-upload";
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgDragDropModule } from 'ng-drag-drop';
-import { NgApexchartsModule } from 'ng-apexcharts';
 import { PalavraRaizListComponent } from './palavra-raiz-list/palavra-raiz-list.component';
 import { PalavraRaizEditComponent } from './palavra-raiz-edit/palavra-raiz-edit.component';
 import { PalavraChaveListComponent } from './palavra-chave-list/palavra-chave-list.component';
@@ -100,7 +99,6 @@ registerLocaleData(localePt, 'pt-BR');
     MatButtonModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    NgApexchartsModule
     //MatMomentDateModule
   ],
   providers: [
