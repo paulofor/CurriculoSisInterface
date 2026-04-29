@@ -1,0 +1,92 @@
+name: Build and Deploy Docker Containers
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docker-compose.yml'
+      - '.dockerignore'
+      - 'loopback-server/**'
+      - 'loopback-angular6/**'
+      - '.github/workflows/deploy-docker-containers.yml'
+  workflow_dispatch:
+
+env:
+  VPS_HOST: 191.252.92.222
+  VPS_PORT: ${{ secrets.VPS_PORTA }}
+  VPS_USER: ${{ secrets.VPS_USUARIO }}
+  VPS_APP_DIR: ${{ secrets.VPS_DIRETORIO_APP }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_CHAVE_PRIVADA_SSH }}
+
+      - name: Add VPS to known_hosts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "${VPS_PORT:-22}" "$VPS_HOST" >> ~/.ssh/known_hosts
+
+      - name: Validate required secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -z "${VPS_USER:-}" ]; then
+            echo "Defina o secret VPS_USUARIO (usuário SSH do servidor)." >&2
+            exit 1
+          fi
+
+          if [ -z "${{ secrets.VPS_CHAVE_PRIVADA_SSH }}" ]; then
+            echo "Defina o secret VPS_CHAVE_PRIVADA_SSH (chave privada SSH)." >&2
+            exit 1
+          fi
+
+      - name: Sync project files to VPS
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          APP_DIR="${VPS_APP_DIR:-/opt/curriculosis}"
+          SSH_PORT="${VPS_PORT:-22}"
+
+          ssh -p "$SSH_PORT" "$VPS_USER@$VPS_HOST" "mkdir -p '$APP_DIR'"
+
+          rsync -az --delete \
+            --exclude '.git' \
+            --exclude '**/node_modules' \
+            --exclude '**/dist' \
+            -e "ssh -p $SSH_PORT" \
+            ./ "$VPS_USER@$VPS_HOST:$APP_DIR/"
+
+      - name: Build and start containers on VPS
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          APP_DIR="${VPS_APP_DIR:-/opt/curriculosis}"
+          SSH_PORT="${VPS_PORT:-22}"
+
+          ssh -p "$SSH_PORT" "$VPS_USER@$VPS_HOST" "
+            cd '$APP_DIR' && \
+            docker compose down && \
+            docker compose up -d --build
+          "
+
+      - name: Show running containers
+        shell: bash
+        run: |
+          set -euo pipefail
+          SSH_PORT="${VPS_PORT:-22}"
+          ssh -p "$SSH_PORT" "$VPS_USER@$VPS_HOST" "docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'"
