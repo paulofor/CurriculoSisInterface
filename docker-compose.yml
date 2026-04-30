@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: curriculosis-backend
     ports:
-      - "3000:3000"
+      - "25012:25012"
     restart: unless-stopped
 
   frontend:
