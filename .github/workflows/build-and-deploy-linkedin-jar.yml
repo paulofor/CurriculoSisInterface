@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      VPS_HOST: 187.45.254.75
+      VPS_HOST: 163.245.200.7
       VPS_PORT: ${{ secrets.VPS_PORTA }}
       VPS_USER: ${{ secrets.VPS_USUARIO }}
       VPS_PUBLIC_DIR: ${{ secrets.VPS_DIRETORIO_PUBLICO }}
