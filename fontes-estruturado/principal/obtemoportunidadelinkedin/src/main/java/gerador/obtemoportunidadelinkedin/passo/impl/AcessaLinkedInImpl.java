@@ -218,7 +218,11 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
 		Path destinoBase = Paths.get(System.getProperty("java.io.tmpdir"), "webdriver", "chrome", versaoDriver, plataforma);
 		Path destinoExecutavel = destinoBase.resolve(nomeExecutavel);
 		if (Files.exists(destinoExecutavel) && Files.isRegularFile(destinoExecutavel)) {
-			return destinoExecutavel;
+			if (ehBinarioExecutavelValido(destinoExecutavel)) {
+				destinoExecutavel.toFile().setExecutable(true);
+				return destinoExecutavel;
+			}
+			Files.delete(destinoExecutavel);
 		}
 
 		String urlZip = "https://storage.googleapis.com/chrome-for-testing-public/" + versaoDriver + "/" + plataforma + "/chromedriver-" + plataforma + ".zip";
@@ -233,6 +237,27 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
 			System.out.println("Não foi possível baixar automaticamente o chromedriver: " + e.getMessage());
 		}
 		return null;
+	}
+
+
+	private boolean ehBinarioExecutavelValido(Path caminho) {
+		try (InputStream input = Files.newInputStream(caminho)) {
+			byte[] cabecalho = input.readNBytes(4);
+			if (cabecalho.length < 2) {
+				return false;
+			}
+			// ELF (Linux/macOS)
+			if (cabecalho.length >= 4 && cabecalho[0] == 0x7F && cabecalho[1] == 0x45 && cabecalho[2] == 0x4C && cabecalho[3] == 0x46) {
+				return true;
+			}
+			// PE (Windows)
+			if (cabecalho[0] == 0x4D && cabecalho[1] == 0x5A) {
+				return true;
+			}
+			return false;
+		} catch (IOException e) {
+			return false;
+		}
 	}
 
 	private String obtemVersaoDriver(String majorChrome) {
