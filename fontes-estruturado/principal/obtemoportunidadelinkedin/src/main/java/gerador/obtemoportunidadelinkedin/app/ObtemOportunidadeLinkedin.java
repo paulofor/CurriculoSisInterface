@@ -52,7 +52,7 @@ public class ObtemOportunidadeLinkedin {
 		//Properties prop = new Properties();
 		//prop.load(input);
 		//UrlLoopback = prop.getProperty("loopback.url");
-		UrlLoopback = "http://191.252.92.222:3000/api";
+		UrlLoopback = "http://191.252.92.222:25012/api";
 		DaoBaseComum.setUrl(UrlLoopback);
 	}
 
