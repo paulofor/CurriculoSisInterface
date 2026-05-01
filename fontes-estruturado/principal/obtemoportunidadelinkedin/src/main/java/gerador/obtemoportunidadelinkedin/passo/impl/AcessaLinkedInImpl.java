@@ -236,14 +236,23 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
 	}
 
 	private String obtemVersaoDriver(String majorChrome) {
-		String endpointVersao = "https://storage.googleapis.com/chrome-for-testing-public/LATEST_RELEASE_STABLE";
+		String endpointVersao = "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE";
 		if (majorChrome != null) {
-			endpointVersao = "https://storage.googleapis.com/chrome-for-testing-public/LATEST_RELEASE_" + majorChrome;
+			endpointVersao = "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_" + majorChrome;
 		}
 
 		String versao = getTexto(endpointVersao);
 		if ((versao == null || versao.isBlank()) && majorChrome != null) {
-			versao = getTexto("https://storage.googleapis.com/chrome-for-testing-public/LATEST_RELEASE_STABLE");
+			versao = getTexto("https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE");
+		}
+
+		// Compatibilidade com endpoint legado (pode existir em ambientes antigos/cacheados).
+		if (versao == null || versao.isBlank()) {
+			String endpointLegado = "https://chromedriver.storage.googleapis.com/LATEST_RELEASE";
+			if (majorChrome != null) {
+				endpointLegado = "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_" + majorChrome;
+			}
+			versao = getTexto(endpointLegado);
 		}
 		return versao == null ? null : versao.trim();
 	}
