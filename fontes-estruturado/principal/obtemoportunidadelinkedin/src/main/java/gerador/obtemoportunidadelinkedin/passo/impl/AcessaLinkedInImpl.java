@@ -222,7 +222,11 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
 				destinoExecutavel.toFile().setExecutable(true);
 				return destinoExecutavel;
 			}
-			Files.delete(destinoExecutavel);
+			try {
+				Files.delete(destinoExecutavel);
+			} catch (IOException e) {
+				return null;
+			}
 		}
 
 		String urlZip = "https://storage.googleapis.com/chrome-for-testing-public/" + versaoDriver + "/" + plataforma + "/chromedriver-" + plataforma + ".zip";
