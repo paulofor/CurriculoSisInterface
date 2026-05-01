@@ -25,6 +25,7 @@ import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -37,6 +38,7 @@ import gerador.obtemoportunidadelinkedin.passo.AcessaLinkedIn;
 public class AcessaLinkedInImpl extends AcessaLinkedIn {
 
 	WebDriver driver = null;
+	private boolean usaSessaoExistente = false;
 	
 	/*
 	 * Trocar o Driver do Chrome:
@@ -51,8 +53,8 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
 	protected boolean executaCustom(PalavraRaiz palavraPesquisaCorrente) {
 		configuraChromeDriver();
 
-        // Inicializar o navegador
-        driver = new ChromeDriver();
+        // Inicializar o navegador (novo) ou conectar em sessão já aberta
+        driver = criaWebDriver();
         WebDriverWait wait = new WebDriverWait(driver, 20);
 
         try {
@@ -100,11 +102,42 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
             e.printStackTrace();
             return false;
         } finally {
-            // Fechar o navegador
-            driver.quit();
+            // Fechar apenas se esta execução abriu um novo navegador
+            if (!usaSessaoExistente && driver != null) {
+            	driver.quit();
+            }
         }
         
 	}
+
+	private WebDriver criaWebDriver() {
+		String debuggerAddress = getDebuggerAddress();
+		if (debuggerAddress != null) {
+			ChromeOptions options = new ChromeOptions();
+			options.setExperimentalOption("debuggerAddress", debuggerAddress);
+			usaSessaoExistente = true;
+			System.out.println("Conectando no Chrome já aberto em: " + debuggerAddress);
+			return new ChromeDriver(options);
+		}
+		usaSessaoExistente = false;
+		return new ChromeDriver();
+	}
+
+	private String getDebuggerAddress() {
+		String[] variaveis = {"CHROME_DEBUGGER_ADDRESS", "WEBDRIVER_CHROME_DEBUGGER_ADDRESS"};
+		for (String variavel : variaveis) {
+			String valor = System.getenv(variavel);
+			if (valor != null && !valor.isBlank()) {
+				return valor.trim();
+			}
+		}
+		String propriedade = System.getProperty("webdriver.chrome.debuggerAddress");
+		if (propriedade != null && !propriedade.isBlank()) {
+			return propriedade.trim();
+		}
+		return null;
+	}
+
 
 	private void pesquisarVagasInteligente(WebDriverWait wait, String palavra) throws InterruptedException {
 		String termo = palavra == null ? "" : palavra.trim();
