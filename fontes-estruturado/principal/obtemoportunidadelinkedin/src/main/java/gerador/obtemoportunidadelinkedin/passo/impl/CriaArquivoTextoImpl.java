@@ -3,6 +3,9 @@ package gerador.obtemoportunidadelinkedin.passo.impl;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import br.com.gersis.loopback.modelo.OportunidadeLinkedin;
@@ -15,12 +18,30 @@ public class CriaArquivoTextoImpl extends CriaArquivoTexto {
 
 	
 	final String PATH = "arquivos";
+	private Path pastaSaida;
 	
+
+	private Path resolvePastaSaida() throws Exception {
+		Path local = Paths.get(PATH);
+		try {
+			Files.createDirectories(local);
+			if (Files.isWritable(local)) {
+				return local;
+			}
+		} catch (Exception ignored) {
+		}
+
+		Path fallback = Paths.get(System.getProperty("java.io.tmpdir"), "curriculosis", "arquivos");
+		Files.createDirectories(fallback);
+		return fallback;
+	}
+
 	@Override
 	protected boolean executaCustom(List<OportunidadeLinkedin> listaOportunidade, PalavraRaiz palavraPesquisaCorrente) {
 		
 
 		final int LIMITE = 5;
+			pastaSaida = resolvePastaSaida();
 		
 		int contaArquivo = 1;
 		int indice = 0;
@@ -30,8 +51,8 @@ public class CriaArquivoTextoImpl extends CriaArquivoTexto {
 		try {
 		
 			while (indice < limiteIndice) {
-				String arquivo = PATH + "/" + palavraPesquisaCorrente.getPalavra().replaceAll(" " ,  "-") + "-" + (contaArquivo++) + ".txt";
-				writer = new BufferedWriter(new FileWriter(arquivo));
+				String arquivo = palavraPesquisaCorrente.getPalavra().replaceAll(" " ,  "-") + "-" + (contaArquivo++) + ".txt";
+				writer = new BufferedWriter(new FileWriter(pastaSaida.resolve(arquivo).toFile()));
 				int oportunidade = 1;
 				for (int pos = indice; pos < limiteIndice ; pos++) {
 					OportunidadeLinkedin atual = listaOportunidade.get(pos);
@@ -51,8 +72,8 @@ public class CriaArquivoTextoImpl extends CriaArquivoTexto {
 				if (limiteIndice > listaOportunidade.size()) limiteIndice = listaOportunidade.size();
 			}
 			
-			String arquivo = PATH + "/" + palavraPesquisaCorrente.getPalavra().replaceAll(" " ,  "-") + "-geral.txt";
-			writer = new BufferedWriter(new FileWriter(arquivo));
+			String arquivo = palavraPesquisaCorrente.getPalavra().replaceAll(" " ,  "-") + "-geral.txt";
+			writer = new BufferedWriter(new FileWriter(pastaSaida.resolve(arquivo).toFile()));
 			for (OportunidadeLinkedin atual : listaOportunidade) {
 				writer.newLine();
 				writer.newLine();
