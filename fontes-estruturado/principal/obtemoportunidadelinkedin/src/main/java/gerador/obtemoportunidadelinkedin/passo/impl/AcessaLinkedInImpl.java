@@ -58,11 +58,7 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
         WebDriverWait wait = new WebDriverWait(driver, 180);
 
         try {
-            // Acessar página base do LinkedIn e autenticar apenas se necessário.
-            driver.get("https://www.linkedin.com/");
-            autenticarSeNecessario(wait);
-
-            // Navegar para a página de busca de vagas de forma resiliente
+            // Navegar para a página de busca sem forçar novo login.
             pesquisarVagasInteligente(wait, palavraPesquisaCorrente.getPalavra());
 
             // Esperar resultados de pesquisa
@@ -182,6 +178,7 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
 		String termoUrl = termo.replace(" ", "%20");
 		driver.get("https://www.linkedin.com/jobs/search/?keywords=" + termoUrl);
 		TimeUnit.SECONDS.sleep(3);
+		autenticarSeRedirecionado(wait);
 
 		// Se a página carregou resultados/lista, não depende de campo de busca.
 		if (temResultadosOuLista()) {
@@ -190,6 +187,7 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
 
 		// Estratégia 2: abrir jobs e tentar campo de busca com múltiplos seletores.
 		driver.get("https://www.linkedin.com/jobs");
+		autenticarSeRedirecionado(wait);
 		WebElement searchBox = encontraCampoBusca(wait);
 		searchBox.clear();
 		searchBox.sendKeys(termo);
@@ -198,6 +196,14 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
 
 		if (!temResultadosOuLista()) {
 			throw new NoSuchElementException("Não foi possível navegar para resultados de vagas no LinkedIn");
+		}
+	}
+
+
+	private void autenticarSeRedirecionado(WebDriverWait wait) {
+		String urlAtual = driver.getCurrentUrl();
+		if (urlAtual.contains("/login") || urlAtual.contains("/checkpoint/")) {
+			autenticarSeNecessario(wait);
 		}
 	}
 
