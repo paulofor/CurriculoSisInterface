@@ -133,21 +133,8 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
 			return;
 		}
 		driver.get("https://www.linkedin.com/login");
-		WebElement emailField = esperaPrimeiroDisponivel(wait,
-			By.id("username"),
-			By.cssSelector("input[name='session_key']"),
-			By.cssSelector("input[autocomplete='username']"));
-		emailField.clear();
-		emailField.sendKeys("paulofore@gmail.com");
-
-		WebElement passwordField = esperaPrimeiroDisponivel(wait,
-			By.id("password"),
-			By.cssSelector("input[name='session_password']"),
-			By.cssSelector("input[autocomplete='current-password']"));
-		passwordField.clear();
-		passwordField.sendKeys("xi5*4NDGrb^+Z6T");
-		passwordField.sendKeys(Keys.RETURN);
-		wait.until(d -> estaLogado() || !d.findElements(By.cssSelector("#error-for-username, .alert.error")).isEmpty());
+		System.out.println("Faça login manualmente no LinkedIn e aguarde o robô continuar...");
+		wait.until(d -> estaLogado());
 	}
 
 	private boolean estaLogado() {
@@ -155,17 +142,6 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
 			return true;
 		}
 		return !driver.findElements(By.cssSelector("img.global-nav__me-photo, button.global-nav__primary-link-me-menu-trigger")).isEmpty();
-	}
-
-	@SafeVarargs
-	private final WebElement esperaPrimeiroDisponivel(WebDriverWait wait, By... localizadores) {
-		for (By by : localizadores) {
-			try {
-				return wait.until(ExpectedConditions.visibilityOfElementLocated(by));
-			} catch (Exception ignored) {
-			}
-		}
-		throw new NoSuchElementException("Elemento não encontrado em nenhuma estratégia");
 	}
 
 	private void pesquisarVagasInteligente(WebDriverWait wait, String palavra) throws InterruptedException {
