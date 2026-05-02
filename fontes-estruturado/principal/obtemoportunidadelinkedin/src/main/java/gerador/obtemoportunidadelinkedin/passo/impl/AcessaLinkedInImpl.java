@@ -56,9 +56,13 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
         // Inicializar o navegador (novo) ou conectar em sessão já aberta
         driver = criaWebDriver();
         WebDriverWait wait = new WebDriverWait(driver, 180);
+        WebDriverWait waitLogin = new WebDriverWait(driver, 300);
 
         try {
-            // Navegar para a página de busca sem forçar novo login.
+            // Abre o LinkedIn e aguarda login manual por até 5 minutos antes das pesquisas.
+            autenticarSeNecessario(waitLogin);
+
+            // Navegar para a página de busca após autenticação.
             pesquisarVagasInteligente(wait, palavraPesquisaCorrente.getPalavra());
 
             // Esperar resultados de pesquisa
@@ -129,10 +133,10 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
 
 
 	private void autenticarSeNecessario(WebDriverWait wait) {
+		driver.get("https://www.linkedin.com/login");
 		if (estaLogado()) {
 			return;
 		}
-		driver.get("https://www.linkedin.com/login");
 		System.out.println("Faça login manualmente no LinkedIn e aguarde o robô continuar...");
 		wait.until(d -> estaLogado());
 	}
