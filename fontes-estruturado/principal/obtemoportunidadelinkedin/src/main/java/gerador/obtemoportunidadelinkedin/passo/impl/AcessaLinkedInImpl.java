@@ -55,7 +55,7 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
 
         // Inicializar o navegador (novo) ou conectar em sessão já aberta
         driver = criaWebDriver();
-        WebDriverWait wait = new WebDriverWait(driver, 20);
+        WebDriverWait wait = new WebDriverWait(driver, 180);
 
         try {
             // Acessar a página de login do LinkedIn
