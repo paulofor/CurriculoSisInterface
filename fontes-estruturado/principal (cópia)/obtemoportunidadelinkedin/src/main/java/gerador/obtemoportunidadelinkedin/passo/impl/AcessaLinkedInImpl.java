@@ -3,14 +3,19 @@ package gerador.obtemoportunidadelinkedin.passo.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.time.Duration;
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import br.com.gersis.loopback.modelo.OportunidadeLinkedin;
 import br.com.gersis.loopback.modelo.PalavraRaiz;
@@ -35,15 +40,14 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
             // Acessar a página de login do LinkedIn
             driver.get("https://www.linkedin.com/login");
 
-            // Fazer login
-            WebElement emailField = driver.findElement(By.id("username"));
-            emailField.sendKeys("paulofore@gmail.com");
+            System.out.println("Faça login manualmente no LinkedIn no navegador aberto.");
+            System.out.println("Depois de concluir o login, pressione ENTER aqui para continuar...");
+            try (Scanner scanner = new Scanner(System.in)) {
+                scanner.nextLine();
+            }
 
-            WebElement passwordField = driver.findElement(By.id("password"));
-            passwordField.sendKeys("Digicom2004");
-            passwordField.sendKeys(Keys.RETURN);
-
-            // Esperar até que a página principal seja carregada
+            // Espera de segurança para confirmar que saiu da tela de login.
+            aguardaLoginConcluido();
             driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 
             // Navegar para a página de busca de vagas
@@ -90,6 +94,19 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
         
 	}
 
+
+    private void aguardaLoginConcluido() {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+        try {
+            wait.until((ExpectedCondition<Boolean>) webDriver -> {
+                if (webDriver == null) return false;
+                String url = webDriver.getCurrentUrl();
+                return url != null && !url.contains("/login");
+            });
+        } catch (TimeoutException e) {
+            throw new RuntimeException("Login não foi concluído em 30 segundos após ENTER.", e);
+        }
+    }
 	
 	
 	private void adicionaItens(PalavraRaiz palavraRaiz) throws InterruptedException {
