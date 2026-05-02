@@ -41,7 +41,6 @@ public class CriaArquivoTextoImpl extends CriaArquivoTexto {
 		
 
 		final int LIMITE = 5;
-			pastaSaida = resolvePastaSaida();
 		
 		int contaArquivo = 1;
 		int indice = 0;
@@ -49,6 +48,7 @@ public class CriaArquivoTextoImpl extends CriaArquivoTexto {
 		
 		BufferedWriter writer = null;
 		try {
+			pastaSaida = resolvePastaSaida();
 		
 			while (indice < limiteIndice) {
 				String arquivo = palavraPesquisaCorrente.getPalavra().replaceAll(" " ,  "-") + "-" + (contaArquivo++) + ".txt";
@@ -99,4 +99,3 @@ public class CriaArquivoTextoImpl extends CriaArquivoTexto {
 
 
 }
-
