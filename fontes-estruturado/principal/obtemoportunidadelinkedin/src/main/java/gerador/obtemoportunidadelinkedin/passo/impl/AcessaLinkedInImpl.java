@@ -154,9 +154,15 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
 			return;
 		}
 
-		String msg = "LinkedIn requer autenticação, mas não foi possível logar automaticamente. Configure LINKEDIN_EMAIL e LINKEDIN_PASSWORD ou use CHROME_DEBUGGER_ADDRESS com sessão já autenticada.";
-		System.out.println(msg);
-		throw new IllegalStateException(msg);
+		System.out.println("Login automático indisponível. Aguarde até 5 minutos para login manual no LinkedIn.");
+		WebDriverWait waitManual = new WebDriverWait(driver, 300);
+		try {
+			waitManual.until(d -> estaLogado());
+		} catch (TimeoutException e) {
+			String msg = "LinkedIn requer autenticação e o login manual não foi concluído em 5 minutos.";
+			System.out.println(msg);
+			throw new IllegalStateException(msg, e);
+		}
 	}
 
 	private boolean tentaLoginComCredenciais() {
