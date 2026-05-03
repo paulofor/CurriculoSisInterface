@@ -39,6 +39,7 @@ import gerador.obtemoportunidadelinkedin.passo.AcessaLinkedIn;
 
 public class AcessaLinkedInImpl extends AcessaLinkedIn {
 
+	private static WebDriver sharedDriver = null;
 	WebDriver driver = null;
 	private boolean usaSessaoExistente = false;
 	
@@ -58,7 +59,7 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
         // Inicializar o navegador (novo) ou conectar em sessão já aberta
         driver = criaWebDriver();
         WebDriverWait wait = new WebDriverWait(driver, 180);
-        WebDriverWait waitLogin = new WebDriverWait(driver, 300);
+        WebDriverWait waitLogin = new WebDriverWait(driver, 60);
 
         try {
             // Abre o LinkedIn e aguarda login manual por até 5 minutos antes das pesquisas.
@@ -90,25 +91,40 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
             e.printStackTrace();
             return false;
         } finally {
-            // Fechar apenas se esta execução abriu um novo navegador
-            if (!usaSessaoExistente && driver != null) {
-            	driver.quit();
-            }
+            // Mantém browser aberto para reutilizar sessão logada em consultas seguintes.
         }
         
 	}
 
-	private WebDriver criaWebDriver() {
+	private synchronized WebDriver criaWebDriver() {
+		if (sharedDriver != null && sessaoAtiva(sharedDriver)) {
+			usaSessaoExistente = true;
+			System.out.println("Reutilizando sessão Chrome já aberta.");
+			return sharedDriver;
+		}
+
 		String debuggerAddress = getDebuggerAddress();
 		if (debuggerAddress != null) {
 			ChromeOptions options = new ChromeOptions();
 			options.setExperimentalOption("debuggerAddress", debuggerAddress);
 			usaSessaoExistente = true;
 			System.out.println("Conectando no Chrome já aberto em: " + debuggerAddress);
-			return new ChromeDriver(options);
+			sharedDriver = new ChromeDriver(options);
+			return sharedDriver;
 		}
+
 		usaSessaoExistente = false;
-		return new ChromeDriver();
+		sharedDriver = new ChromeDriver();
+		return sharedDriver;
+	}
+
+	private boolean sessaoAtiva(WebDriver webDriver) {
+		try {
+			webDriver.getCurrentUrl();
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
 	}
 
 	private String getDebuggerAddress() {
@@ -132,8 +148,36 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
 		if (estaLogado()) {
 			return;
 		}
-		System.out.println("Faça login manualmente no LinkedIn e aguarde o robô continuar...");
-		wait.until(d -> estaLogado());
+
+		if (tentaLoginComCredenciais()) {
+			wait.until(d -> estaLogado());
+			return;
+		}
+
+		String msg = "LinkedIn requer autenticação, mas não foi possível logar automaticamente. Configure LINKEDIN_EMAIL e LINKEDIN_PASSWORD ou use CHROME_DEBUGGER_ADDRESS com sessão já autenticada.";
+		System.out.println(msg);
+		throw new IllegalStateException(msg);
+	}
+
+	private boolean tentaLoginComCredenciais() {
+		String email = System.getenv("LINKEDIN_EMAIL");
+		String senha = System.getenv("LINKEDIN_PASSWORD");
+		if (email == null || email.isBlank() || senha == null || senha.isBlank()) {
+			return false;
+		}
+		try {
+			WebElement inputEmail = driver.findElement(By.id("username"));
+			WebElement inputSenha = driver.findElement(By.id("password"));
+			inputEmail.clear();
+			inputEmail.sendKeys(email.trim());
+			inputSenha.clear();
+			inputSenha.sendKeys(senha);
+			inputSenha.sendKeys(Keys.RETURN);
+			return true;
+		} catch (Exception e) {
+			System.out.println("Falha ao preencher formulário de login automático do LinkedIn: " + e.getMessage());
+			return false;
+		}
 	}
 
 	private boolean estaLogado() {
