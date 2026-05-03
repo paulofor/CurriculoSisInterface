@@ -22,6 +22,8 @@ import java.util.zip.ZipInputStream;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.StaleElementReferenceException;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -75,18 +77,11 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
             adicionaItens(palavraPesquisaCorrente);
 
 			for (int pagina = 2; pagina <= 15; pagina++) {
-				// Localiza o botão pelo atributo aria-label usando XPath
-				try {
-					WebElement button = driver.findElement(By.xpath("//button[@aria-label='Página " + pagina + "']"));
-					if (button != null) {
-						button.click();
-						TimeUnit.SECONDS.sleep(5);
-						adicionaItens(palavraPesquisaCorrente);
-					}
-				} catch (NoSuchElementException e) {
-
+				if (!irParaPagina(wait, pagina)) {
+					System.out.println("Não foi possível navegar para a página " + pagina + ", encerrando paginação.");
+					break;
 				}
-
+				adicionaItens(palavraPesquisaCorrente);
 			}
             
            
@@ -446,10 +441,18 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
 			By.cssSelector("a.job-card-list__title")
 		};
 		List<WebElement> jobs = localizarElementosPrimeiroDisponivel(seletoresCards);
-    	 for (WebElement job : jobs) {
-         	OportunidadeLinkedin novo = new OportunidadeLinkedin();
-             job.click();
-             TimeUnit.SECONDS.sleep(2);
+		for (int indice = 0; indice < jobs.size(); indice++) {
+			List<WebElement> cardsAtualizados = localizarElementosPrimeiroDisponivel(seletoresCards);
+			if (indice >= cardsAtualizados.size()) {
+				break;
+			}
+
+			OportunidadeLinkedin novo = new OportunidadeLinkedin();
+			if (!clicarComRetry(cardsAtualizados.get(indice), 3)) {
+				System.out.println("Não foi possível abrir card no índice " + indice);
+				continue;
+			}
+			esperaCurta(2);
 
              try {
                  String descricaoTexto = obterTextoPrimeiroDisponivel(
@@ -536,6 +539,48 @@ public class AcessaLinkedInImpl extends AcessaLinkedIn {
              }
          }
     }
+
+
+	private boolean irParaPagina(WebDriverWait wait, int pagina) {
+		By[] seletoresPaginacao = {
+			By.xpath("//button[@aria-label='Página " + pagina + "']"),
+			By.xpath("//button[contains(@aria-label,'Page " + pagina + "')]"),
+			By.xpath("//button[@aria-label='Page " + pagina + "']")
+		};
+		for (By seletor : seletoresPaginacao) {
+			try {
+				WebElement botao = wait.until(ExpectedConditions.elementToBeClickable(seletor));
+				if (clicarComRetry(botao, 3)) {
+					esperaCurta(3);
+					return true;
+				}
+			} catch (TimeoutException e) {
+			}
+		}
+		return false;
+	}
+
+	private boolean clicarComRetry(WebElement elemento, int tentativas) {
+		for (int tentativa = 1; tentativa <= tentativas; tentativa++) {
+			try {
+				elemento.click();
+				return true;
+			} catch (StaleElementReferenceException e) {
+				esperaCurta(1);
+			} catch (Exception e) {
+				esperaCurta(tentativa);
+			}
+		}
+		return false;
+	}
+
+	private void esperaCurta(int segundos) {
+		try {
+			TimeUnit.SECONDS.sleep(segundos);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
+	}
 
 	private List<WebElement> localizarElementosPrimeiroDisponivel(By... seletores) {
 		for (By seletor : seletores) {
