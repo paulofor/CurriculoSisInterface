@@ -9,6 +9,8 @@ on:
       - '.dockerignore'
       - 'loopback-server/**'
       - 'loopback-angular6/**'
+      - 'mcp-server-java/**'
+      - 'deploy/nginx/**'
       - '.github/workflows/deploy-docker-containers.yml'
   workflow_dispatch:
 
