@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: curriculosis-mcp-server
+  datasource:
+    url: jdbc:mysql://d555d.vps-kinghost.net:3306/curriculosis?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: curriculo
+    password: "Curr!cu7o"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  ai:
+    mcp:
+      server:
+        name: curriculosis-db-mcp
+        version: 0.0.1
+        type: sync
+server:
+  port: 8090
+
+logging:
+  level:
+    org.springframework.ai: INFO
