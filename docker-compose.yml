@@ -6,8 +6,8 @@ services:
       context: ./loopback-server
       dockerfile: Dockerfile
     container_name: curriculosis-backend
-    expose:
-      - "25012"
+    ports:
+      - "25012:25012"
     restart: unless-stopped
 
   frontend:
