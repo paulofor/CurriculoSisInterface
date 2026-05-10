@@ -8,6 +8,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import br.com.gersis.loopback.modelo.OportunidadeLinkedin;
 import br.com.gersis.loopback.modelo.PalavraRaiz;
 import gerador.obtemoportunidadelinkedin.passo.CriaArquivoTexto;
@@ -51,40 +54,35 @@ public class CriaArquivoTextoImpl extends CriaArquivoTexto {
 			pastaSaida = resolvePastaSaida();
 		
 			while (indice < limiteIndice) {
-				String arquivo = palavraPesquisaCorrente.getPalavra().replaceAll(" " ,  "-") + "-" + (contaArquivo++) + ".txt";
+				String arquivo = palavraPesquisaCorrente.getPalavra().replaceAll(" " ,  "-") + "-" + (contaArquivo++) + ".json";
 				writer = new BufferedWriter(new FileWriter(pastaSaida.resolve(arquivo).toFile()));
-				int oportunidade = 1;
+				JSONArray oportunidades = new JSONArray();
 				for (int pos = indice; pos < limiteIndice ; pos++) {
 					OportunidadeLinkedin atual = listaOportunidade.get(pos);
-					writer.write("[Oportunidade " + (oportunidade++) + "]");
-					writer.newLine();
-					writer.write("Oportunidade: " + atual.getTitulo());
-					writer.newLine(); // Adicionar uma nova linha após cada linha escrita
-					writer.newLine();
-					writer.write(atual.getDescricao());
-					writer.newLine(); // Adicionar uma nova linha após cada linha escrita
-					writer.write("-----------------------------------------------------------------------------------");
-					writer.newLine();
+					JSONObject item = new JSONObject();
+					item.put("titulo", atual.getTitulo());
+					item.put("url", atual.getUrl());
+					item.put("descricao", atual.getDescricao());
+					oportunidades.put(item);
 				}
+				writer.write(oportunidades.toString(2));
 				writer.close();
 				limiteIndice = limiteIndice + LIMITE;
 				indice = indice + LIMITE;
 				if (limiteIndice > listaOportunidade.size()) limiteIndice = listaOportunidade.size();
 			}
 			
-			String arquivo = palavraPesquisaCorrente.getPalavra().replaceAll(" " ,  "-") + "-geral.txt";
+			String arquivo = palavraPesquisaCorrente.getPalavra().replaceAll(" " ,  "-") + "-geral.json";
 			writer = new BufferedWriter(new FileWriter(pastaSaida.resolve(arquivo).toFile()));
+			JSONArray oportunidades = new JSONArray();
 			for (OportunidadeLinkedin atual : listaOportunidade) {
-				writer.newLine();
-				writer.newLine();
-				writer.write("Oportunidade: " + atual.getTitulo());
-				writer.newLine(); // Adicionar uma nova linha após cada linha escrita
-				writer.newLine();
-				writer.write(atual.getDescricao());
-				writer.newLine(); // Adicionar uma nova linha após cada linha escrita
-				writer.write("-----------------------------------------------------------------------------------");
-				writer.newLine();
+				JSONObject item = new JSONObject();
+				item.put("titulo", atual.getTitulo());
+				item.put("url", atual.getUrl());
+				item.put("descricao", atual.getDescricao());
+				oportunidades.put(item);
 			}
+			writer.write(oportunidades.toString(2));
 			writer.close();
 			
 			return true;
