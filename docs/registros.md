@@ -9,3 +9,12 @@
 
 ## 2026-05-10 14:45 (UTC-3)
 - Criado `analise-oportunidades-service/AGENTS.md` com instrução de governança para o módulo: toda mudança realizada nesse módulo deve ser registrada em `/docs/registros.md`.
+
+## 2026-05-10 17:41 (UTC-3)
+- Evoluído o `analise-oportunidades-service` para refletir o objetivo principal de cruzar oportunidades recentes com a experiência do usuário: o request agora aceita `descricaoOportunidade` e `experienciaProfissional` e o cálculo de score passou a incluir aderência textual entre os dois campos.
+- Refinadas mensagens de recomendação para explicitar o nível de aderência ao histórico profissional.
+
+## 2026-05-10 17:46 (UTC-3)
+- Implementada integração do `analise-oportunidades-service` com a API da OpenAI para enviar descrição da oportunidade e experiência profissional ao modelo de IA, retornando um parecer textual de aderência.
+- Incluído novo campo `analiseIa` no response para expor o resultado textual da IA ao frontend/consumidores.
+- Adicionadas propriedades de configuração `openai.api.key` e `openai.model`, com suporte a variáveis de ambiente `OPENAI_API_KEY` e `OPENAI_MODEL`.
