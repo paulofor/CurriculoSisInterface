@@ -6,3 +6,6 @@
 ## 2026-05-04 14:05 (UTC-3)
 - Ajuste aplicado no gateway Nginx para MCP: em `location /mcp/`, `proxy_pass` alterado de `http://mcp-server:8090/mcp/` para `http://mcp-server:8090/` para evitar encaminhamento indevido do path `/mcp/` ao upstream e eliminar resposta `404` do Spring.
 - Atualizado `AGENTS.md` com nota operacional explicando a causa raiz e o mapeamento correto para futuras manutenções.
+
+## 2026-05-10 14:45 (UTC-3)
+- Criado `analise-oportunidades-service/AGENTS.md` com instrução de governança para o módulo: toda mudança realizada nesse módulo deve ser registrada em `/docs/registros.md`.

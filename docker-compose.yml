@@ -34,6 +34,17 @@ services:
       - backend
     restart: unless-stopped
 
+
+
+  analise-oportunidades:
+    build:
+      context: ./analise-oportunidades-service
+      dockerfile: Dockerfile
+    container_name: curriculosis-analise-oportunidades
+    expose:
+      - "8081"
+    restart: unless-stopped
+
   gateway:
     image: nginx:1.27-alpine
     container_name: curriculosis-gateway
@@ -45,4 +56,5 @@ services:
       - frontend
       - backend
       - mcp-server
+      - analise-oportunidades
     restart: unless-stopped
