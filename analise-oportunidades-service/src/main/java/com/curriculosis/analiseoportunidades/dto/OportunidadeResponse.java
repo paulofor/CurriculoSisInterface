@@ -4,6 +4,7 @@ public record OportunidadeResponse(
         String titulo,
         String empresa,
         int scoreFinal,
-        String recomendacao
+        String recomendacao,
+        String analiseIa
 ) {
 }

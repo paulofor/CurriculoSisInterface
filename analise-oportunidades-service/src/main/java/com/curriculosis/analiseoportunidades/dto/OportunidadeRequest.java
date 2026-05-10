@@ -9,6 +9,8 @@ public record OportunidadeRequest(
         @NotBlank String titulo,
         @NotBlank String empresa,
         @NotBlank String nivel,
+        @NotBlank String descricaoOportunidade,
+        @NotBlank String experienciaProfissional,
         @NotNull @Min(0) @Max(100) Integer compatibilidade,
         @NotNull @Min(0) Integer salarioEstimado
 ) {
