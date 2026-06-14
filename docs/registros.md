@@ -18,3 +18,7 @@
 - Implementada integração do `analise-oportunidades-service` com a API da OpenAI para enviar descrição da oportunidade e experiência profissional ao modelo de IA, retornando um parecer textual de aderência.
 - Incluído novo campo `analiseIa` no response para expor o resultado textual da IA ao frontend/consumidores.
 - Adicionadas propriedades de configuração `openai.api.key` e `openai.model`, com suporte a variáveis de ambiente `OPENAI_API_KEY` e `OPENAI_MODEL`.
+
+## 2026-06-14 19:56 (UTC-3)
+- Criada rotina no `analise-oportunidades-service` para ranquear uma lista de oportunidades contra o currículo mestre em JSON de Paulo Forestieri, usando `docs/curriculos/paulo_forestieri_curriculo_master_inicial.json` como referência configurável.
+- Incluído endpoint `POST /api/oportunidades/aderentes-curriculo`, com retorno ordenado por score, termos aderentes, lacunas e parecer de IA quando a chave OpenAI estiver configurada.

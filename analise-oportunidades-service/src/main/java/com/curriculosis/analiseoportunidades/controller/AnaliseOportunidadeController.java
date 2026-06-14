@@ -2,6 +2,8 @@ package com.curriculosis.analiseoportunidades.controller;
 
 import com.curriculosis.analiseoportunidades.dto.OportunidadeRequest;
 import com.curriculosis.analiseoportunidades.dto.OportunidadeResponse;
+import com.curriculosis.analiseoportunidades.dto.RankingOportunidadesCurriculoRequest;
+import com.curriculosis.analiseoportunidades.dto.RankingOportunidadesCurriculoResponse;
 import com.curriculosis.analiseoportunidades.service.AnaliseOportunidadeService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -29,5 +31,12 @@ public class AnaliseOportunidadeController {
     @PostMapping("/analisar")
     public ResponseEntity<OportunidadeResponse> analisar(@Valid @RequestBody OportunidadeRequest request) {
         return ResponseEntity.ok(service.analisar(request));
+    }
+
+    @PostMapping("/aderentes-curriculo")
+    public ResponseEntity<RankingOportunidadesCurriculoResponse> aderentesCurriculo(
+            @Valid @RequestBody RankingOportunidadesCurriculoRequest request
+    ) {
+        return ResponseEntity.ok(service.ranquearPorCurriculo(request));
     }
 }
