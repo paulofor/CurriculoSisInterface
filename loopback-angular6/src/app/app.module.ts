@@ -46,9 +46,6 @@ import { ExperienciaProfissionalLivreListComponent } from './experiencia-profiss
 import { ExperienciaProfissionalLivreEditComponent } from './experiencia-profissional-livre-edit/experiencia-profissional-livre-edit.component';
 import { OportunidadeLinkedinListPorPalavraComponent } from './oportunidade-linkedin-list-por-palavra/oportunidade-linkedin-list-por-palavra.component';
 import { MelhoresOportunidadesComponent } from './melhores-oportunidades/melhores-oportunidades.component';
-import { CnaeListComponent } from './cnae-list/cnae-list.component';
-import { CnaeSubnichoListComponent } from './cnae-subnicho-list/cnae-subnicho-list.component';
-import { SubnichoPipelineComponent } from './subnicho-pipeline/subnicho-pipeline.component';
 
 
 //import { MatMomentDateModule, MAT_MOMENT_DATE_ADAPTER_OPTIONS } from '@angular/material-moment-adapter';
@@ -71,10 +68,7 @@ registerLocaleData(localePt, 'pt-BR');
     ExperienciaProfissionalLivreListComponent,
     ExperienciaProfissionalLivreEditComponent,
     OportunidadeLinkedinListPorPalavraComponent,
-    MelhoresOportunidadesComponent,
-    CnaeListComponent,
-    CnaeSubnichoListComponent,
-    SubnichoPipelineComponent
+    MelhoresOportunidadesComponent
   ],
   imports: [
     BrowserModule,
