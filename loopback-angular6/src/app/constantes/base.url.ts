@@ -1,7 +1,8 @@
 //
 
-export const BASE_URL = 'http://vps-40d69db1.vps.ovh.ca:25012'; 
-//export const BASE_URL = 'http://localhost:25012'; 
+export const BASE_URL = '';
+// Use relative URLs so the frontend talks to the same host that served it.
+
 
 export const API_VERSION = 'api';
 
