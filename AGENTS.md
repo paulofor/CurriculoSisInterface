@@ -11,6 +11,10 @@
 - Por isso, o gateway deve mapear `location /mcp/` para `proxy_pass http://mcp-server:8090/`.
 - Se usar `proxy_pass http://mcp-server:8090/mcp/`, o upstream recebe `/mcp/` e tende a responder `404 Not Found`.
 
+
+## OpenAI API key no host
+- Existe uma chave para acesso aos modelos da OpenAI no arquivo físico do host: `/root/infra/openai-token/openai_api_key`.
+
 ## Referências
 - Host público usado pelo frontend: `loopback-angular6/src/app/constantes/base.url.ts`.
 - Roteamento `/mcp/` no gateway: `deploy/nginx/default.conf`.
