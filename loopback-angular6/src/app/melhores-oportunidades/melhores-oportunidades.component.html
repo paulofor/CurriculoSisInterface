@@ -1,0 +1,66 @@
+<div class="dgc-painel melhores-oportunidades">
+  <div class="dgc-painel-header">
+    <span>Melhores oportunidades</span>
+    <button class="btn btn-primary btn-sm dgc-botao-comando dgc-direita" (click)="carregarMelhoresOportunidades()" [disabled]="carregando">
+      atualizar análise
+    </button>
+  </div>
+
+  <div class="dgc-painel-principal">
+    <div class="alert alert-info" *ngIf="carregando">
+      Analisando oportunidades recentes contra o currículo mestre. Vagas em inglês ou que exigem inglês fluente são ignoradas automaticamente.
+    </div>
+
+    <div class="alert alert-danger" *ngIf="erro">
+      {{ erro }}
+    </div>
+
+    <div class="resumo" *ngIf="!carregando && !erro">
+      <div><strong>Currículo de referência:</strong> {{ curriculoReferencia || 'não informado' }}</div>
+      <div><strong>Total recebido:</strong> {{ totalOportunidades }}</div>
+      <div><strong>Oportunidades recomendadas:</strong> {{ oportunidades.length }}</div>
+      <div><strong>Ignoradas por inglês:</strong> {{ oportunidadesIgnoradas.length }}</div>
+    </div>
+
+    <div class="alert alert-warning" *ngIf="!carregando && !erro && oportunidades.length === 0">
+      Nenhuma oportunidade aderente encontrada entre as oportunidades recentes.
+    </div>
+
+    <div class="oportunidade-card" *ngFor="let item of oportunidades; let indice = index">
+      <div class="oportunidade-topo">
+        <div>
+          <span class="posicao">#{{ indice + 1 }}</span>
+          <h3>{{ item.titulo }}</h3>
+          <p class="empresa">{{ item.empresa }}</p>
+        </div>
+        <div class="score">{{ item.scoreFinal }}</div>
+      </div>
+
+      <p class="recomendacao">{{ item.recomendacao }}</p>
+
+      <div class="bloco-termos">
+        <div>
+          <strong>Termos aderentes</strong>
+          <p>{{ termosFormatados(item.termosAderentes) }}</p>
+        </div>
+        <div>
+          <strong>Lacunas</strong>
+          <p>{{ termosFormatados(item.lacunas) }}</p>
+        </div>
+      </div>
+
+      <div class="analise-ia" *ngIf="item.analiseIa">
+        <strong>Análise da IA</strong>
+        <p>{{ item.analiseIa }}</p>
+      </div>
+    </div>
+
+    <div class="ignoradas" *ngIf="oportunidadesIgnoradas.length > 0">
+      <h4>Ignoradas automaticamente</h4>
+      <p>Estas vagas não foram analisadas porque estão em inglês ou indicam exigência de inglês fluente.</p>
+      <ul>
+        <li *ngFor="let item of oportunidadesIgnoradas">{{ item.titulo }} — {{ item.empresa }}</li>
+      </ul>
+    </div>
+  </div>
+</div>

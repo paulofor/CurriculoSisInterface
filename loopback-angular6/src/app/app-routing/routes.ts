@@ -10,6 +10,7 @@ import { PalavraRaizDetalheComQuantidadeComponent } from '../palavra-raiz-detalh
 import { OportunidadeLinkedinDetalheComponent } from '../oportunidade-linkedin-detalhe/oportunidade-linkedin-detalhe.component';
 import { ExperienciaProfissionalLivreListComponent } from '../experiencia-profissional-livre-list/experiencia-profissional-livre-list.component';
 import { OportunidadeLinkedinListPorPalavraComponent } from '../oportunidade-linkedin-list-por-palavra/oportunidade-linkedin-list-por-palavra.component';
+import { MelhoresOportunidadesComponent } from '../melhores-oportunidades/melhores-oportunidades.component';
 
 
 
@@ -24,6 +25,7 @@ export const routes : Routes = [
 
     { path: 'oportunidade/:id' , component: OportunidadeLinkedinDetalheComponent },
     { path: 'experienciaProfissional' , component: ExperienciaProfissionalLivreListComponent },
+    { path: 'melhoresOportunidades' , component: MelhoresOportunidadesComponent },
 
     { path: 'oportunidadePalavra/:idPalavra/:idRaiz' , component: OportunidadeLinkedinListPorPalavraComponent },
 
