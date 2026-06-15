@@ -1,0 +1,23 @@
+<div class="oprm-page">
+  <div class="oprm-header">
+    <div>
+      <h2>2. Subnichos do CNAE {{ cnae }}</h2>
+      <p>Veja todos os subnichos existentes para o CNAE selecionado.</p>
+    </div>
+    <button class="btn btn-primary" [disabled]="criando" (click)="criarNovoSubnicho()">
+      {{ criando ? 'Criando...' : 'Criar novo subnicho' }}
+    </button>
+  </div>
+
+  <div class="oprm-card" *ngFor="let subnicho of subnichos" (click)="abrirSubnicho(subnicho)">
+    <div class="subnicho-title">
+      <h4>{{ subnicho.nome }}</h4>
+      <span>{{ subnicho.status }}</span>
+    </div>
+    <div class="metrics">
+      <div><small>Jobs</small><b>{{ subnicho.jobs }}</b></div>
+      <div><small>Custo total</small><b>{{ subnicho.custoTotal | currency:'USD':'symbol':'1.4-4' }}</b></div>
+      <div><small>Custo/execução</small><b>{{ subnicho.custoPorExecucao | currency:'USD':'symbol':'1.4-4' }}</b></div>
+    </div>
+  </div>
+</div>
