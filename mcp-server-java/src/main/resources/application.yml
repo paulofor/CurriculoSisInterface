@@ -18,3 +18,8 @@ server:
 logging:
   level:
     org.springframework.ai: INFO
+
+
+curriculosis:
+  logs:
+    backend-file: /var/log/curriculosis/backend.log
