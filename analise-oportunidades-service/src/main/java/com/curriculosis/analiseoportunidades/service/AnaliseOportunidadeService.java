@@ -31,6 +31,16 @@ public class AnaliseOportunidadeService {
     }
 
     public OportunidadeResponse analisar(OportunidadeRequest request) {
+        if (deveIgnorarPorIngles(request.titulo(), request.descricaoOportunidade())) {
+            return new OportunidadeResponse(
+                    request.titulo(),
+                    request.empresa(),
+                    0,
+                    "Ignorada: oportunidade em inglês ou com exigência de inglês fluente",
+                    "Análise de IA não executada porque a vaga exige inglês ou está em inglês."
+            );
+        }
+
         int scoreFinal = calcularScoreFinal(
                 request.nivel(),
                 request.experienciaProfissional(),
@@ -64,6 +74,18 @@ public class AnaliseOportunidadeService {
     }
 
     private OportunidadeCurriculoResponse analisarComCurriculo(OportunidadeCurriculoRequest request, String textoCurriculo) {
+        if (deveIgnorarPorIngles(request.titulo(), request.descricaoOportunidade())) {
+            return new OportunidadeCurriculoResponse(
+                    request.titulo(),
+                    request.empresa(),
+                    0,
+                    "Ignorada: oportunidade em inglês ou com exigência de inglês fluente",
+                    List.of(),
+                    List.of("inglês"),
+                    "Análise de IA não executada porque a vaga exige inglês ou está em inglês."
+            );
+        }
+
         int scoreFinal = calcularScoreFinal(
                 request.nivel(),
                 textoCurriculo,
@@ -148,5 +170,47 @@ public class AnaliseOportunidadeService {
                 .filter(token -> token.length() > 2)
                 .filter(token -> !STOP_WORDS.contains(token))
                 .collect(Collectors.toSet());
+    }
+
+    private boolean deveIgnorarPorIngles(String titulo, String descricaoOportunidade) {
+        String textoOriginal = ((titulo == null ? "" : titulo) + " " + (descricaoOportunidade == null ? "" : descricaoOportunidade)).trim();
+        if (textoOriginal.isBlank()) {
+            return false;
+        }
+
+        String texto = textoOriginal.toLowerCase();
+        if (texto.contains("inglês fluente")
+                || texto.contains("ingles fluente")
+                || texto.contains("inglês avançado")
+                || texto.contains("ingles avançado")
+                || texto.contains("advanced english")
+                || texto.contains("fluent english")
+                || texto.contains("english fluency")
+                || texto.contains("professional english")
+                || texto.contains("business english")
+                || texto.contains("must speak english")
+                || texto.contains("required english")
+                || texto.contains("english required")) {
+            return true;
+        }
+
+        return pareceTextoEmIngles(textoOriginal);
+    }
+
+    private boolean pareceTextoEmIngles(String textoOriginal) {
+        Set<String> termos = tokenizar(textoOriginal);
+        if (termos.size() < 8) {
+            return false;
+        }
+
+        Set<String> marcadoresIngles = Set.of(
+                "job", "remote", "responsibilities", "requirements", "required", "experience", "skills",
+                "developer", "engineer", "software", "team", "work", "years", "strong", "knowledge",
+                "ability", "build", "design", "develop", "systems", "applications", "cloud", "english"
+        );
+
+        long ocorrencias = termos.stream().filter(marcadoresIngles::contains).count();
+        double proporcao = (double) ocorrencias / termos.size();
+        return ocorrencias >= 5 && proporcao >= 0.12;
     }
 }

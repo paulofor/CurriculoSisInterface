@@ -33,7 +33,8 @@ public class OpenAiAnaliseService {
         }
 
         String prompt = "Avalie a aderência entre a oportunidade e o perfil profissional em no máximo 4 linhas. " +
-                "Responda em português com: nivel_aderencia (alta/media/baixa), pontos_fortes e lacunas.\n\n" +
+                "Responda em português com: nivel_aderencia (alta/media/baixa), pontos_fortes e lacunas. " +
+                "Considere como restrição forte que o profissional não possui inglês fluente; se a vaga exigir inglês fluente, informe aderência baixa.\n\n" +
                 "Oportunidade: " + titulo + " | Empresa: " + empresa + "\n" +
                 "Descrição da vaga: " + descricaoOportunidade + "\n" +
                 "Experiência do profissional: " + experienciaProfissional;

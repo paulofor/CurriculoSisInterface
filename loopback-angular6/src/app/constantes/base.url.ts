@@ -7,6 +7,7 @@ export const API_VERSION = 'api';
 
 export const URL_UPLOAD = BASE_URL + '/api/containers/container1/upload';
 export const URL_IMAGEM = BASE_URL + '/api/containers/container1/download';
+export const ANALISE_OPORTUNIDADES_URL = 'http://vps-40d69db1.vps.ovh.ca/oportunidades';
 
 
 

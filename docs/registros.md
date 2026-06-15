@@ -22,3 +22,8 @@
 ## 2026-06-14 19:56 (UTC-3)
 - Criada rotina no `analise-oportunidades-service` para ranquear uma lista de oportunidades contra o currículo mestre em JSON de Paulo Forestieri, usando `docs/curriculos/paulo_forestieri_curriculo_master_inicial.json` como referência configurável.
 - Incluído endpoint `POST /api/oportunidades/aderentes-curriculo`, com retorno ordenado por score, termos aderentes, lacunas e parecer de IA quando a chave OpenAI estiver configurada.
+
+## 2026-06-15 11:27 (UTC-3)
+- Alterado o modelo padrão do `analise-oportunidades-service` para `gpt-5.2`.
+- Incluída regra para ignorar oportunidades em inglês ou com exigência de inglês fluente/avançado antes do cálculo de score e antes da chamada de IA.
+- Criada tela no frontend para listar as melhores oportunidades recentes, consumindo o endpoint de ranking por currículo e destacando vagas ignoradas por inglês.
