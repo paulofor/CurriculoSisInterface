@@ -4,6 +4,7 @@ var loopback = require('loopback');
 var boot = require('loopback-boot');
 
 var app = module.exports = loopback();
+require('./request-logger')(app);
 require('loopback-counts-mixin')(app);
 
 app.start = function() {

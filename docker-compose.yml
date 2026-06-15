@@ -8,6 +8,10 @@ services:
     container_name: curriculosis-backend
     ports:
       - "25012:25012"
+    environment:
+      - BACKEND_LOG_FILE=/var/log/curriculosis/backend.log
+    volumes:
+      - backend-logs:/var/log/curriculosis
     restart: unless-stopped
 
   frontend:
@@ -30,6 +34,8 @@ services:
     container_name: curriculosis-mcp-server
     expose:
       - "8090"
+    volumes:
+      - backend-logs:/var/log/curriculosis:ro
     depends_on:
       - backend
     restart: unless-stopped
@@ -58,3 +64,6 @@ services:
       - mcp-server
       - analise-oportunidades
     restart: unless-stopped
+
+volumes:
+  backend-logs:
