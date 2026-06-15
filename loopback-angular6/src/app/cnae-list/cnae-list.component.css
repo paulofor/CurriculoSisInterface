@@ -1,0 +1,9 @@
+.oprm-page { padding: 20px; }
+.oprm-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+.oprm-card { background: #fff; border: 1px solid #d8e2ef; border-radius: 6px; padding: 18px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+.cnae-row { display: flex; justify-content: space-between; cursor: pointer; transition: border-color .2s, transform .2s; }
+.cnae-row:hover { border-color: #0d6efd; transform: translateY(-1px); }
+.cnae-row h4 { margin: 6px 0; }
+.metric { text-align: right; min-width: 140px; }
+.metric small { display: block; color: #667085; }
+.metric b { font-size: 18px; }

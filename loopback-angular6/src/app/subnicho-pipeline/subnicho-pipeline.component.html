@@ -1,0 +1,26 @@
+<div class="oprm-page" *ngIf="subnicho">
+  <div class="oprm-header">
+    <div>
+      <h2>4. Pipeline do subnicho</h2>
+      <p>{{ subnicho.nome }}</p>
+    </div>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card"><small>Nicho</small><b>{{ subnicho.status }}</b></div>
+    <div class="summary-card"><small>Histórico</small><b>{{ subnicho.jobs }} job(s)</b></div>
+    <div class="summary-card"><small>Custo total</small><b>{{ subnicho.custoTotal | currency:'USD':'symbol':'1.4-4' }}</b></div>
+    <div class="summary-card"><small>Custo por execução</small><b>{{ subnicho.custoPorExecucao | currency:'USD':'symbol':'1.4-4' }}</b></div>
+  </div>
+
+  <h3>Evolução do pipeline</h3>
+  <div class="pipeline-grid">
+    <div class="pipeline-card" *ngFor="let etapa of etapas" [ngClass]="{'done': etapa.status === 'Concluído', 'running': etapa.status === 'Em execução'}">
+      <div class="pipeline-top">
+        <strong>{{ etapa.ordem }}. {{ etapa.nome }}</strong>
+        <span>{{ etapa.status }}</span>
+      </div>
+      <p>{{ etapa.descricao }}</p>
+    </div>
+  </div>
+</div>

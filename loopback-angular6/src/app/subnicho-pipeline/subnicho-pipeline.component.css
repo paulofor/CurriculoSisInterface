@@ -1,0 +1,15 @@
+.oprm-page { padding: 20px; }
+.oprm-header { margin-bottom: 18px; }
+.oprm-header p { font-size: 16px; color: #344054; }
+.summary-grid { display: grid; grid-template-columns: repeat(4, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.summary-card { background: #fff; border: 1px solid #d8e2ef; border-radius: 6px; padding: 16px; }
+.summary-card small { display: block; color: #667085; }
+.summary-card b { display: block; margin-top: 5px; font-size: 17px; }
+.pipeline-grid { display: grid; grid-template-columns: repeat(2, minmax(220px, 1fr)); gap: 12px; }
+.pipeline-card { background: #fff; border: 1px solid #d8e2ef; border-radius: 6px; padding: 16px; }
+.pipeline-card.done { background: #198754; color: #fff; }
+.pipeline-card.running { background: #cfe2ff; border-color: #0d6efd; }
+.pipeline-top { display: flex; justify-content: space-between; gap: 12px; }
+.pipeline-top span { background: #fff; border-radius: 12px; color: #111827; padding: 3px 8px; font-size: 12px; white-space: nowrap; }
+.pipeline-card p { margin-bottom: 0; }
+@media (max-width: 900px) { .summary-grid, .pipeline-grid { grid-template-columns: 1fr; } }

@@ -1,0 +1,20 @@
+<div class="oprm-page">
+  <div class="oprm-header">
+    <div>
+      <h2>1. CNAEs</h2>
+      <p>Selecione um CNAE para visualizar os subnichos já criados e solicitar novas oportunidades.</p>
+    </div>
+  </div>
+
+  <div class="oprm-card cnae-row" *ngFor="let cnae of cnaes" (click)="abrirSubnichos(cnae)">
+    <div>
+      <strong>{{ cnae.codigo }}</strong>
+      <h4>{{ cnae.descricao }}</h4>
+      <span>{{ cnae.totalSubnichos }} subnicho(s) criado(s)</span>
+    </div>
+    <div class="metric">
+      <small>Custo total</small>
+      <b>{{ cnae.custoTotal | currency:'USD':'symbol':'1.4-4' }}</b>
+    </div>
+  </div>
+</div>
