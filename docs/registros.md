@@ -29,3 +29,6 @@
 - Criada tela no frontend para listar as melhores oportunidades recentes, consumindo o endpoint de ranking por currículo e destacando vagas ignoradas por inglês.
 
 - Ajustado deploy Docker para servir o Angular por Nginx de produção (sem SockJS/live reload na porta 4200 pública), apontar o gateway para a porta interna 80 do frontend e disponibilizar a chave da OpenAI como Docker secret para o serviço de análise; o serviço também passou a tratar falhas da chamada à OpenAI sem derrubar o endpoint de ranking.
+
+## 2026-06-16 15:55 (UTC-3)
+- Corrigido o `analise-oportunidades-service` para empacotar o currículo mestre como recurso da aplicação e usá-lo como fallback quando o arquivo `docs/curriculos/paulo_forestieri_curriculo_master_inicial.json` não existir dentro da imagem Docker, evitando erro 500 no endpoint `/api/oportunidades/aderentes-curriculo` em produção.
