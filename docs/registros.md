@@ -32,3 +32,8 @@
 
 ## 2026-06-16 15:55 (UTC-3)
 - Corrigido o `analise-oportunidades-service` para empacotar o currículo mestre como recurso da aplicação e usá-lo como fallback quando o arquivo `docs/curriculos/paulo_forestieri_curriculo_master_inicial.json` não existir dentro da imagem Docker, evitando erro 500 no endpoint `/api/oportunidades/aderentes-curriculo` em produção.
+
+## 2026-06-16 20:54 (UTC-3)
+- Configurado o `analise-oportunidades-service` para gravar logs em arquivo via `LOGGING_FILE_NAME`, permitindo persistência em volume Docker compartilhado.
+- Expandido o MCP Server com ferramentas para consultar status, tail e busca textual no log do serviço de análise de oportunidades, além do log do backend já existente.
+- Ajustado o `docker-compose.yml` para montar o volume `/var/log/curriculosis` também no serviço de análise, viabilizando diagnóstico do erro 500 de `/api/oportunidades/aderentes-curriculo` via MCP.

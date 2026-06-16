@@ -49,6 +49,9 @@ services:
       - "8081"
     environment:
       - OPENAI_API_KEY_FILE=/run/secrets/openai_api_key
+      - LOGGING_FILE_NAME=/var/log/curriculosis/analise-oportunidades.log
+    volumes:
+      - backend-logs:/var/log/curriculosis
     secrets:
       - openai_api_key
     restart: unless-stopped
