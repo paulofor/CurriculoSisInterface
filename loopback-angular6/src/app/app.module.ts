@@ -45,6 +45,7 @@ import { OportunidadeLinkedinDetalheComponent } from './oportunidade-linkedin-de
 import { ExperienciaProfissionalLivreListComponent } from './experiencia-profissional-livre-list/experiencia-profissional-livre-list.component';
 import { ExperienciaProfissionalLivreEditComponent } from './experiencia-profissional-livre-edit/experiencia-profissional-livre-edit.component';
 import { OportunidadeLinkedinListPorPalavraComponent } from './oportunidade-linkedin-list-por-palavra/oportunidade-linkedin-list-por-palavra.component';
+import { OportunidadeLinkedinListSimplesComponent } from './oportunidade-linkedin-list-simples/oportunidade-linkedin-list-simples.component';
 import { MelhoresOportunidadesComponent } from './melhores-oportunidades/melhores-oportunidades.component';
 
 
@@ -68,6 +69,7 @@ registerLocaleData(localePt, 'pt-BR');
     ExperienciaProfissionalLivreListComponent,
     ExperienciaProfissionalLivreEditComponent,
     OportunidadeLinkedinListPorPalavraComponent,
+    OportunidadeLinkedinListSimplesComponent,
     MelhoresOportunidadesComponent
   ],
   imports: [
