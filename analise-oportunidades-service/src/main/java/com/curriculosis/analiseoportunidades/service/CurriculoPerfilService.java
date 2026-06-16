@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
@@ -41,10 +43,23 @@ public class CurriculoPerfilService {
 
     private JsonNode lerCurriculo() {
         Path path = resolverPathExistente();
-        try {
-            return objectMapper.readTree(Files.readString(path));
+        if (path != null) {
+            try {
+                return objectMapper.readTree(Files.readString(path));
+            } catch (IOException e) {
+                throw new IllegalStateException("Não foi possível ler o currículo mestre em " + path, e);
+            }
+        }
+
+        String resourcePath = "curriculos/" + curriculoPath.getFileName();
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
+            if (inputStream == null) {
+                throw new IllegalStateException("Currículo mestre não encontrado em " + curriculoPath + " nem no recurso " + resourcePath);
+            }
+            String json = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            return objectMapper.readTree(json);
         } catch (IOException e) {
-            throw new IllegalStateException("Não foi possível ler o currículo mestre em " + path, e);
+            throw new IllegalStateException("Não foi possível ler o currículo mestre do recurso " + resourcePath, e);
         }
     }
 
@@ -58,7 +73,7 @@ public class CurriculoPerfilService {
             return fallback;
         }
 
-        throw new IllegalStateException("Currículo mestre não encontrado em " + curriculoPath + " ou " + fallback);
+        return null;
     }
 
     private void adicionarTexto(JsonNode node, StringBuilder texto) {
