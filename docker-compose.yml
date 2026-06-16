@@ -20,9 +20,7 @@ services:
       dockerfile: Dockerfile
     container_name: curriculosis-frontend
     expose:
-      - "4200"
-    environment:
-      - CHOKIDAR_USEPOLLING=true
+      - "80"
     depends_on:
       - backend
     restart: unless-stopped
@@ -49,6 +47,10 @@ services:
     container_name: curriculosis-analise-oportunidades
     expose:
       - "8081"
+    environment:
+      - OPENAI_API_KEY_FILE=/run/secrets/openai_api_key
+    secrets:
+      - openai_api_key
     restart: unless-stopped
 
   gateway:
@@ -67,3 +69,7 @@ services:
 
 volumes:
   backend-logs:
+
+secrets:
+  openai_api_key:
+    file: /root/infra/openai-token/openai_api_key

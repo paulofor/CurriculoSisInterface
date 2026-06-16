@@ -1,4 +1,4 @@
-FROM node:10-buster
+FROM node:10-buster AS build
 
 WORKDIR /app
 
@@ -6,6 +6,11 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
+RUN npm run build -- --configuration=production
 
-EXPOSE 4200
-CMD ["npm", "start", "--", "--host", "0.0.0.0", "--port", "4200"]
+FROM nginx:1.27-alpine
+
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist/sisacao-angular /usr/share/nginx/html
+
+EXPOSE 80

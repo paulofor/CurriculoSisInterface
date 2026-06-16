@@ -6,6 +6,8 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -18,12 +20,13 @@ public class OpenAiAnaliseService {
 
     public OpenAiAnaliseService(
             @Value("${openai.api.key:}") String apiKey,
+            @Value("${openai.api.key.file:}") String apiKeyFile,
             @Value("${openai.model:gpt-4.1-mini}") String model
     ) {
         this.restClient = RestClient.builder()
                 .baseUrl("https://api.openai.com/v1")
                 .build();
-        this.apiKey = apiKey;
+        this.apiKey = resolverApiKey(apiKey, apiKeyFile);
         this.model = model;
     }
 
@@ -44,15 +47,35 @@ public class OpenAiAnaliseService {
                 "input", List.of(Map.of("role", "user", "content", prompt))
         );
 
-        Map<?, ?> resposta = restClient.post()
-                .uri("/responses")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(payload)
-                .retrieve()
-                .body(Map.class);
+        try {
+            Map<?, ?> resposta = restClient.post()
+                    .uri("/responses")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(payload)
+                    .retrieve()
+                    .body(Map.class);
 
-        Object outputText = resposta != null ? resposta.get("output_text") : null;
-        return outputText != null ? outputText.toString() : "Sem retorno textual da análise de IA.";
+            Object outputText = resposta != null ? resposta.get("output_text") : null;
+            return outputText != null ? outputText.toString() : "Sem retorno textual da análise de IA.";
+        } catch (Exception e) {
+            return "Análise de IA indisponível no momento: " + e.getMessage();
+        }
+    }
+
+    private String resolverApiKey(String apiKey, String apiKeyFile) {
+        if (apiKey != null && !apiKey.isBlank()) {
+            return apiKey.trim();
+        }
+
+        if (apiKeyFile == null || apiKeyFile.isBlank()) {
+            return "";
+        }
+
+        try {
+            return Files.readString(Path.of(apiKeyFile)).trim();
+        } catch (Exception e) {
+            return "";
+        }
     }
 }

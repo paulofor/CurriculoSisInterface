@@ -27,3 +27,5 @@
 - Alterado o modelo padrão do `analise-oportunidades-service` para `gpt-5.2`.
 - Incluída regra para ignorar oportunidades em inglês ou com exigência de inglês fluente/avançado antes do cálculo de score e antes da chamada de IA.
 - Criada tela no frontend para listar as melhores oportunidades recentes, consumindo o endpoint de ranking por currículo e destacando vagas ignoradas por inglês.
+
+- Ajustado deploy Docker para servir o Angular por Nginx de produção (sem SockJS/live reload na porta 4200 pública), apontar o gateway para a porta interna 80 do frontend e disponibilizar a chave da OpenAI como Docker secret para o serviço de análise; o serviço também passou a tratar falhas da chamada à OpenAI sem derrubar o endpoint de ranking.
