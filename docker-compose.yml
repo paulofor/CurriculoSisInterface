@@ -56,6 +56,29 @@ services:
       - openai_api_key
     restart: unless-stopped
 
+
+  avaliador-aderencia:
+    build:
+      context: ./avaliador-aderencia-service
+      dockerfile: Dockerfile
+    container_name: curriculosis-avaliador-aderencia
+    expose:
+      - "8082"
+    environment:
+      - OPENAI_API_KEY_FILE=/run/secrets/openai_api_key
+      - LOGGING_FILE_NAME=/var/log/curriculosis/avaliador-aderencia.log
+      - AVALIADOR_BACKEND_BASE_URL=http://backend:25012
+      - AVALIADOR_BACKEND_RESULTADOS_PATH=/api/avaliador-aderencia/resultados
+      - AVALIADOR_SCHEDULER_CRON=0 0 */6 * * *
+      - AVALIADOR_LOTE_TAMANHO=10
+    volumes:
+      - backend-logs:/var/log/curriculosis
+    secrets:
+      - openai_api_key
+    depends_on:
+      - backend
+    restart: unless-stopped
+
   gateway:
     image: nginx:1.27-alpine
     container_name: curriculosis-gateway
@@ -68,6 +91,7 @@ services:
       - backend
       - mcp-server
       - analise-oportunidades
+      - avaliador-aderencia
     restart: unless-stopped
 
 volumes:
