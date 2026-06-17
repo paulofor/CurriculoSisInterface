@@ -37,3 +37,8 @@
 - Configurado o `analise-oportunidades-service` para gravar logs em arquivo via `LOGGING_FILE_NAME`, permitindo persistência em volume Docker compartilhado.
 - Expandido o MCP Server com ferramentas para consultar status, tail e busca textual no log do serviço de análise de oportunidades, além do log do backend já existente.
 - Ajustado o `docker-compose.yml` para montar o volume `/var/log/curriculosis` também no serviço de análise, viabilizando diagnóstico do erro 500 de `/api/oportunidades/aderentes-curriculo` via MCP.
+
+## 2026-06-17
+- Criado o módulo `avaliador-aderencia-service`, uma aplicação Spring Boot com scheduler para avaliar oportunidades em lotes usando OpenAI.
+- Adicionados endpoints no backend LoopBack para consultar health/status, disparar execução manual e receber callbacks de resultados do avaliador.
+- Atualizados `docker-compose.yml` e Nginx para publicar o novo container no mesmo host.
