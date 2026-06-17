@@ -139,12 +139,24 @@ jobs:
             # The gateway is the only service expected to publish port 80. On
             # this VPS Apache can be left running by the base image/control
             # panel and will keep the port busy even after Compose is stopped.
-            # Stop it before the port wait so the replacement gateway can bind
-            # 80 without failing the deployment.
-            if command -v systemctl >/dev/null 2>&1 && systemctl list-unit-files apache2.service >/dev/null 2>&1; then
-              sudo systemctl stop apache2 || true
-            elif command -v service >/dev/null 2>&1; then
-              sudo service apache2 stop || true
+            # Stop Apache and its socket/timer units before the port wait so the
+            # replacement gateway can bind 80 without failing the deployment.
+            if command -v systemctl >/dev/null 2>&1; then
+              sudo -n systemctl stop apache2 apache2.service apache2.socket apache2@*.service 2>/dev/null || true
+              sudo -n systemctl kill apache2 apache2.service apache2.socket apache2@*.service 2>/dev/null || true
+            fi
+
+            if command -v service >/dev/null 2>&1; then
+              sudo -n service apache2 stop 2>/dev/null || true
+            fi
+
+            # Some images/panels immediately respawn Apache workers even after a
+            # service stop. If Apache still owns port 80, terminate only those
+            # processes so unrelated web services are not affected.
+            if (ss -ltnp 2>/dev/null || netstat -ltnp 2>/dev/null || true) | grep -Eq '(:80.*apache2|apache2.*:80)'; then
+              sudo -n pkill -TERM -x apache2 2>/dev/null || true
+              sleep 2
+              sudo -n pkill -KILL -x apache2 2>/dev/null || true
             fi
 
             # Docker can briefly keep published ports reserved while the old
