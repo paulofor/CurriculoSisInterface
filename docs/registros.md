@@ -42,3 +42,6 @@
 - Criado o módulo `avaliador-aderencia-service`, uma aplicação Spring Boot com scheduler para avaliar oportunidades em lotes usando OpenAI.
 - Adicionados endpoints no backend LoopBack para consultar health/status, disparar execução manual e receber callbacks de resultados do avaliador.
 - Atualizados `docker-compose.yml` e Nginx para publicar o novo container no mesmo host.
+
+## 2026-06-17 18:41 (UTC-3)
+- Otimizado o Dockerfile do `analise-oportunidades-service` para baixar dependências Maven em uma camada separada (`dependency:go-offline`) antes de copiar o código-fonte, reduzindo rebuilds longos no GitHub Actions quando apenas arquivos `src` mudam.
