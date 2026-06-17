@@ -135,6 +135,26 @@ jobs:
             trap 'rm -f \"$APP_DIR/$DOCKER_IMAGE_ARCHIVE\"' EXIT
             docker load -i '$APP_DIR/$DOCKER_IMAGE_ARCHIVE'
             docker compose down --remove-orphans
+
+            # Docker can briefly keep published ports reserved while the old
+            # gateway endpoint/proxy is being torn down. Wait for port 80 to be
+            # fully released before creating the replacement gateway container,
+            # otherwise compose may fail with 'address already in use'.
+            for attempt in \$(seq 1 30); do
+              if ! (ss -ltn 2>/dev/null || netstat -ltn 2>/dev/null) | grep -Eq '(^|[[:space:]])(0\\.0\\.0\\.0:80|\\[::\\]:80|:::80|\\*:80)[[:space:]]'; then
+                break
+              fi
+
+              if [ "\$attempt" -eq 30 ]; then
+                echo 'Porta 80 ainda ocupada após parar o compose; diagnóstico:' >&2
+                (ss -ltnp 2>/dev/null || netstat -ltnp 2>/dev/null || true) | grep -E '(:80[[:space:]]|:80$)' >&2 || true
+                docker ps --filter publish=80 --format 'table {{.ID}}\t{{.Names}}\t{{.Ports}}' >&2 || true
+                exit 1
+              fi
+
+              sleep 2
+            done
+
             docker compose up -d --no-build --remove-orphans
             docker image prune -af
             docker builder prune -af
