@@ -17,6 +17,10 @@ export interface OportunidadeLinkedinInterface {
   "maisRecente"?: number;
   "modelo"?: string;
   "dataEnvio"?: Date;
+  "notaAderencia"?: number;
+  "analiseAderenciaIa"?: string;
+  "statusAderencia"?: string;
+  "dataAvaliacaoAderencia"?: Date;
   "id"?: number;
   palavraRaiz?: PalavraRaiz;
   oportunidadePalavras?: OportunidadePalavra[];
@@ -34,6 +38,10 @@ export class OportunidadeLinkedin implements OportunidadeLinkedinInterface {
   "maisRecente": number;
   "modelo": string;
   "dataEnvio": Date;
+  "notaAderencia": number;
+  "analiseAderenciaIa": string;
+  "statusAderencia": string;
+  "dataAvaliacaoAderencia": Date;
   "id": number;
   palavraRaiz: PalavraRaiz;
   oportunidadePalavras: OportunidadePalavra[];
@@ -112,6 +120,22 @@ export class OportunidadeLinkedin implements OportunidadeLinkedinInterface {
         },
         "dataEnvio": {
           name: 'dataEnvio',
+          type: 'Date'
+        },
+        "notaAderencia": {
+          name: 'notaAderencia',
+          type: 'number'
+        },
+        "analiseAderenciaIa": {
+          name: 'analiseAderenciaIa',
+          type: 'string'
+        },
+        "statusAderencia": {
+          name: 'statusAderencia',
+          type: 'string'
+        },
+        "dataAvaliacaoAderencia": {
+          name: 'dataAvaliacaoAderencia',
           type: 'Date'
         },
         "id": {

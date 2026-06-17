@@ -1,0 +1,15 @@
+.oportunidades-selecionadas .score {
+  background: #2f9e44;
+  border-radius: 18px;
+  color: #fff;
+  display: inline-block;
+  font-weight: 700;
+  min-width: 46px;
+  padding: 6px 10px;
+  text-align: center;
+}
+
+.oportunidades-selecionadas .analise {
+  max-width: 420px;
+  white-space: normal;
+}
