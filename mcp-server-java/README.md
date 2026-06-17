@@ -21,6 +21,8 @@ Servidor sobe na porta `8090`.
 - `list_tables`: lista tabelas
 - `describe_table`: descreve colunas da tabela
 - `query_table`: consulta registros com limite de 1 a 200
+- `backend_log_status`, `tail_backend_log`, `search_backend_log`: consulta o log do backend LoopBack
+- `analise_oportunidades_log_status`, `tail_analise_oportunidades_log`, `search_analise_oportunidades_log`: consulta o log do serviço de análise de oportunidades
 
 ## Configuração de banco
 
