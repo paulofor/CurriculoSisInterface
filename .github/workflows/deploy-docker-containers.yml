@@ -86,8 +86,30 @@ jobs:
             --exclude '.git' \
             --exclude '**/node_modules' \
             --exclude '**/dist' \
+            --exclude '**/build' \
+            --exclude '**/target' \
+            --exclude '**/.angular/cache' \
+            --exclude '**/.gradle' \
+            --exclude '**/.mvn/wrapper/dists' \
+            --exclude '**/coverage' \
             -e "ssh -p $SSH_PORT" \
             ./ "$VPS_USER@$VPS_HOST:$APP_DIR/"
+
+      - name: Pre-clean Docker cache on VPS
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          APP_DIR="${VPS_APP_DIR:-/opt/curriculosis}"
+          SSH_PORT="${VPS_PORT:-22}"
+
+          ssh -p "$SSH_PORT" "$VPS_USER@$VPS_HOST" "
+            set -e
+            mkdir -p '$APP_DIR'
+            rm -f '$APP_DIR/$DOCKER_IMAGE_ARCHIVE'
+            docker builder prune -af
+            docker image prune -af
+          "
 
       - name: Transfer prebuilt images to VPS
         shell: bash
@@ -108,13 +130,13 @@ jobs:
           SSH_PORT="${VPS_PORT:-22}"
 
           ssh -p "$SSH_PORT" "$VPS_USER@$VPS_HOST" "
-            set -e && \
-            cd '$APP_DIR' && \
-            docker image prune -af && \
-            docker load -i '$APP_DIR/$DOCKER_IMAGE_ARCHIVE' && \
-            rm -f '$APP_DIR/$DOCKER_IMAGE_ARCHIVE' && \
-            docker compose up -d --no-build --remove-orphans && \
+            set -e
+            cd '$APP_DIR'
+            trap 'rm -f \"$APP_DIR/$DOCKER_IMAGE_ARCHIVE\"' EXIT
+            docker load -i '$APP_DIR/$DOCKER_IMAGE_ARCHIVE'
+            docker compose up -d --no-build --remove-orphans
             docker image prune -af
+            docker builder prune -af
           "
 
       - name: Show running containers
