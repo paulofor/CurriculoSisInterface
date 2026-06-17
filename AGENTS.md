@@ -3,7 +3,7 @@
 ## MCP Server access
 - O MCP server é publicado no mesmo host do frontend/backend, passando pelo gateway Nginx na porta `80`.
 - Endpoint público para clientes MCP: `http://vps-40d69db1.vps.ovh.ca/mcp/`.
-- Endpoint por IP (IPv4 resolvido em 04/05/2026): `http://51.79.51.172/mcp/`.
+- Endpoint por IP atual do MCP server real: `http://191.252.92.222/mcp/`.
 - Em ambiente local (docker compose), a rota equivalente é `http://localhost/mcp/`.
 
 ## Detalhe importante de roteamento
