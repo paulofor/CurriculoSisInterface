@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { OportunidadeLinkedin, OportunidadeLinkedinApi } from '../shared/sdk';
+import { OportunidadeLinkedinApi, OportunidadeLinkedinInterface } from '../shared/sdk';
 
-interface OportunidadeSelecionada extends OportunidadeLinkedin {
+interface OportunidadeSelecionada extends OportunidadeLinkedinInterface {
   notaAderencia?: number;
   analiseAderenciaIa?: string;
   statusAderencia?: string;
