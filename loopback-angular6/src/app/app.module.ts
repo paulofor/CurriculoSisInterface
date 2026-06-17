@@ -47,6 +47,7 @@ import { ExperienciaProfissionalLivreEditComponent } from './experiencia-profiss
 import { OportunidadeLinkedinListPorPalavraComponent } from './oportunidade-linkedin-list-por-palavra/oportunidade-linkedin-list-por-palavra.component';
 import { OportunidadeLinkedinListSimplesComponent } from './oportunidade-linkedin-list-simples/oportunidade-linkedin-list-simples.component';
 import { MelhoresOportunidadesComponent } from './melhores-oportunidades/melhores-oportunidades.component';
+import { OportunidadesSelecionadasComponent } from './oportunidades-selecionadas/oportunidades-selecionadas.component';
 
 
 //import { MatMomentDateModule, MAT_MOMENT_DATE_ADAPTER_OPTIONS } from '@angular/material-moment-adapter';
@@ -70,7 +71,8 @@ registerLocaleData(localePt, 'pt-BR');
     ExperienciaProfissionalLivreEditComponent,
     OportunidadeLinkedinListPorPalavraComponent,
     OportunidadeLinkedinListSimplesComponent,
-    MelhoresOportunidadesComponent
+    MelhoresOportunidadesComponent,
+    OportunidadesSelecionadasComponent
   ],
   imports: [
     BrowserModule,

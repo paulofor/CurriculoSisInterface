@@ -5,9 +5,9 @@
 	"options": {
 		"validateUpsert": true
 	},
-  	"mixins": {
-    	"Counts": true
-  	},
+	"mixins": {
+		"Counts": true
+	},
 	"properties": {
 		"descricao": {
 			"type": "string"
@@ -41,6 +41,18 @@
 		},
 		"dataEnvio": {
 			"type": "date"
+		},
+		"notaAderencia": {
+			"type": "number"
+		},
+		"analiseAderenciaIa": {
+			"type": "string"
+		},
+		"statusAderencia": {
+			"type": "string"
+		},
+		"dataAvaliacaoAderencia": {
+			"type": "date"
 		}
 	},
 	"validations": [],
@@ -63,81 +75,81 @@
 				{
 					"arg": "oportunidade",
 					"type": "object",
-   					"required": false,
-    				"description": ""
+					"required": false,
+					"description": ""
 				}
 			],
 			"returns": [
- 				{
-     				"arg": "resultado",
-     				"type": "object",
-   					"root": true,
-    				"description": ""
-   				}
+				{
+					"arg": "resultado",
+					"type": "object",
+					"root": true,
+					"description": ""
+				}
 			],
 			"description": "",
 			"http": [
-         		{
-          			"path": "/recebeItem",
-   					"verb": "post"
- 				}
- 			]
+				{
+					"path": "/recebeItem",
+					"verb": "post"
+				}
+			]
 		},
 		"RegistraEnvio": {
 			"accepts": [
 				{
 					"arg": "idOportunidade",
 					"type": "number",
-   					"required": false,
-    				"description": ""
+					"required": false,
+					"description": ""
 				}
 			],
 			"returns": [
- 				{
-     				"arg": "resultado",
-     				"type": "object",
-   					"root": true,
-    				"description": ""
-   				}
+				{
+					"arg": "resultado",
+					"type": "object",
+					"root": true,
+					"description": ""
+				}
 			],
 			"description": "",
 			"http": [
-         		{
-          			"path": "/registraEnvio",
-   					"verb": "post"
- 				}
- 			]
+				{
+					"path": "/registraEnvio",
+					"verb": "post"
+				}
+			]
 		},
 		"ObtemPorChaveRaiz": {
 			"accepts": [
 				{
 					"arg": "idPalvraRaiz",
 					"type": "number",
-   					"required": false,
-    				"description": ""
+					"required": false,
+					"description": ""
 				},
 				{
 					"arg": "idPalavraChave",
 					"type": "number",
-   					"required": false,
-    				"description": ""
+					"required": false,
+					"description": ""
 				}
 			],
 			"returns": [
- 				{
-     				"arg": "resultado",
-     				"type": "array",
-   					"root": true,
-    				"description": ""
-   				}
+				{
+					"arg": "resultado",
+					"type": "array",
+					"root": true,
+					"description": ""
+				}
 			],
 			"description": "",
 			"http": [
-         		{
-          			"path": "/obtemPorChaveRaiz",
-   					"verb": "get"
- 				}
- 			]
+				{
+					"path": "/obtemPorChaveRaiz",
+					"verb": "get"
+				}
+			]
 		}
 	}
 }
