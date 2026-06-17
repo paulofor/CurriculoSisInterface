@@ -136,6 +136,17 @@ jobs:
             docker load -i '$APP_DIR/$DOCKER_IMAGE_ARCHIVE'
             docker compose down --remove-orphans
 
+            # The gateway is the only service expected to publish port 80. On
+            # this VPS Apache can be left running by the base image/control
+            # panel and will keep the port busy even after Compose is stopped.
+            # Stop it before the port wait so the replacement gateway can bind
+            # 80 without failing the deployment.
+            if command -v systemctl >/dev/null 2>&1 && systemctl list-unit-files apache2.service >/dev/null 2>&1; then
+              sudo systemctl stop apache2 || true
+            elif command -v service >/dev/null 2>&1; then
+              sudo service apache2 stop || true
+            fi
+
             # Docker can briefly keep published ports reserved while the old
             # gateway endpoint/proxy is being torn down. Wait for port 80 to be
             # fully released before creating the replacement gateway container,
