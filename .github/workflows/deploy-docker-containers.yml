@@ -10,6 +10,8 @@ on:
       - 'loopback-server/**'
       - 'loopback-angular6/**'
       - 'mcp-server-java/**'
+      - 'analise-oportunidades-service/**'
+      - 'avaliador-aderencia-service/**'
       - 'deploy/nginx/**'
       - '.github/workflows/deploy-docker-containers.yml'
   workflow_dispatch:
@@ -19,6 +21,7 @@ env:
   VPS_PORT: ${{ secrets.VPS_PORTA }}
   VPS_USER: ${{ secrets.VPS_USUARIO }}
   VPS_APP_DIR: ${{ secrets.VPS_DIRETORIO_APP }}
+  DOCKER_IMAGE_ARCHIVE: curriculosis-images.tar.gz
 
 jobs:
   deploy:
@@ -55,6 +58,20 @@ jobs:
             exit 1
           fi
 
+      - name: Build container images on GitHub runner
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker compose build --pull
+          docker save \
+            curriculosis-backend:latest \
+            curriculosis-frontend:latest \
+            curriculosis-mcp-server:latest \
+            curriculosis-analise-oportunidades:latest \
+            curriculosis-avaliador-aderencia:latest \
+            | gzip > "$RUNNER_TEMP/$DOCKER_IMAGE_ARCHIVE"
+
       - name: Sync project files to VPS
         shell: bash
         run: |
@@ -72,7 +89,17 @@ jobs:
             -e "ssh -p $SSH_PORT" \
             ./ "$VPS_USER@$VPS_HOST:$APP_DIR/"
 
-      - name: Build and start containers on VPS
+      - name: Transfer prebuilt images to VPS
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          APP_DIR="${VPS_APP_DIR:-/opt/curriculosis}"
+          SSH_PORT="${VPS_PORT:-22}"
+
+          scp -P "$SSH_PORT" "$RUNNER_TEMP/$DOCKER_IMAGE_ARCHIVE" "$VPS_USER@$VPS_HOST:$APP_DIR/$DOCKER_IMAGE_ARCHIVE"
+
+      - name: Load images and start containers on VPS
         shell: bash
         run: |
           set -euo pipefail
@@ -81,9 +108,13 @@ jobs:
           SSH_PORT="${VPS_PORT:-22}"
 
           ssh -p "$SSH_PORT" "$VPS_USER@$VPS_HOST" "
+            set -e && \
             cd '$APP_DIR' && \
-            docker compose down && \
-            docker compose up -d --build
+            docker image prune -af && \
+            docker load -i '$APP_DIR/$DOCKER_IMAGE_ARCHIVE' && \
+            rm -f '$APP_DIR/$DOCKER_IMAGE_ARCHIVE' && \
+            docker compose up -d --no-build --remove-orphans && \
+            docker image prune -af
           "
 
       - name: Show running containers
