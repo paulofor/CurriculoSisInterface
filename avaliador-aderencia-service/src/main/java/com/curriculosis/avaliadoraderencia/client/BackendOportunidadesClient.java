@@ -2,6 +2,8 @@ package com.curriculosis.avaliadoraderencia.client;
 
 import com.curriculosis.avaliadoraderencia.dto.AvaliacaoAderenciaResultado;
 import com.curriculosis.avaliadoraderencia.dto.OportunidadeBackend;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
@@ -15,7 +17,10 @@ import java.util.Map;
 @Component
 public class BackendOportunidadesClient {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(BackendOportunidadesClient.class);
+
     private final RestClient restClient;
+    private final String backendBaseUrl;
     private final String resultadosPath;
 
     public BackendOportunidadesClient(
@@ -23,15 +28,19 @@ public class BackendOportunidadesClient {
             @Value("${avaliador.backend.resultados-path}") String resultadosPath
     ) {
         this.restClient = RestClient.builder().baseUrl(backendBaseUrl).build();
+        this.backendBaseUrl = backendBaseUrl;
         this.resultadosPath = resultadosPath;
     }
 
     public List<OportunidadeBackend> buscarOportunidadesPendentes(int limite) {
         String filter = "{\"where\":{\"and\":[{\"descricao\":{\"neq\":null}},{\"maisRecente\":1}]},\"order\":\"data DESC\",\"limit\":" + limite + "}";
-        return restClient.get()
+        LOGGER.info("Buscando oportunidades pendentes no backend. baseUrl={}, limite={}, filter={}", backendBaseUrl, limite, filter);
+        List<OportunidadeBackend> oportunidades = restClient.get()
                 .uri("/api/OportunidadeLinkedins?filter=" + encodeQueryParam(filter))
                 .retrieve()
                 .body(new ParameterizedTypeReference<List<OportunidadeBackend>>() {});
+        LOGGER.info("Backend retornou {} oportunidades pendentes para avaliação.", oportunidades == null ? 0 : oportunidades.size());
+        return oportunidades;
     }
 
     static String encodeQueryParam(String value) {
@@ -39,10 +48,15 @@ public class BackendOportunidadesClient {
     }
 
     public void enviarResultado(AvaliacaoAderenciaResultado resultado) {
+        LOGGER.info(
+                "Enviando resultado de aderência ao backend. oportunidadeId={}, status={}, nota={}, path={}",
+                resultado.oportunidadeId(), resultado.status(), resultado.notaAderencia(), resultadosPath
+        );
         restClient.post()
                 .uri(resultadosPath)
                 .body(Map.of("resultado", resultado))
                 .retrieve()
                 .toBodilessEntity();
+        LOGGER.info("Resultado de aderência enviado ao backend com sucesso. oportunidadeId={}", resultado.oportunidadeId());
     }
 }
