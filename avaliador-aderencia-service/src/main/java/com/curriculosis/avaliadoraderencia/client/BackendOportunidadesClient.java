@@ -7,6 +7,8 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -27,12 +29,13 @@ public class BackendOportunidadesClient {
     public List<OportunidadeBackend> buscarOportunidadesPendentes(int limite) {
         String filter = "{\"where\":{\"and\":[{\"descricao\":{\"neq\":null}},{\"maisRecente\":1}]},\"order\":\"data DESC\",\"limit\":" + limite + "}";
         return restClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/api/OportunidadeLinkedins")
-                        .queryParam("filter", filter)
-                        .build())
+                .uri("/api/OportunidadeLinkedins?filter=" + encodeQueryParam(filter))
                 .retrieve()
                 .body(new ParameterizedTypeReference<List<OportunidadeBackend>>() {});
+    }
+
+    static String encodeQueryParam(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 
     public void enviarResultado(AvaliacaoAderenciaResultado resultado) {
