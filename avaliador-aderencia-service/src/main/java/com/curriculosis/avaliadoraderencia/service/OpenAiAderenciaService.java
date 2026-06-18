@@ -2,6 +2,8 @@ package com.curriculosis.avaliadoraderencia.service;
 
 import com.curriculosis.avaliadoraderencia.dto.AvaliacaoAderenciaResultado;
 import com.curriculosis.avaliadoraderencia.dto.OportunidadeBackend;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -18,6 +20,7 @@ import java.util.regex.Pattern;
 @Service
 public class OpenAiAderenciaService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(OpenAiAderenciaService.class);
     private static final Pattern NOTA_PATTERN = Pattern.compile("nota_aderencia\\s*[:=]\\s*(\\d{1,3})", Pattern.CASE_INSENSITIVE);
 
     private final RestClient restClient;
@@ -35,10 +38,15 @@ public class OpenAiAderenciaService {
         this.apiKey = resolverApiKey(apiKey, apiKeyFile);
         this.model = model;
         this.curriculoReferenciaService = curriculoReferenciaService;
+        LOGGER.info(
+                "OpenAiAderenciaService inicializado. model={}, apiKeyConfigurada={}, apiKeyFileConfigurado={}",
+                model, this.apiKey != null && !this.apiKey.isBlank(), apiKeyFile != null && !apiKeyFile.isBlank()
+        );
     }
 
     public AvaliacaoAderenciaResultado avaliar(OportunidadeBackend oportunidade) {
         if (apiKey == null || apiKey.isBlank()) {
+            LOGGER.warn("Avaliação não executada por ausência de chave OpenAI. oportunidadeId={}", oportunidade.id());
             return new AvaliacaoAderenciaResultado(
                     oportunidade.id(), oportunidade.titulo(), oportunidade.empresa(), 0,
                     "Avaliação não executada: configure OPENAI_API_KEY ou OPENAI_API_KEY_FILE.", "SEM_API_KEY"
@@ -58,6 +66,11 @@ public class OpenAiAderenciaService {
                 "input", List.of(Map.of("role", "user", "content", prompt))
         );
 
+        LOGGER.info(
+                "Enviando oportunidade para avaliação OpenAI. oportunidadeId={}, model={}, caracteresPrompt={}",
+                oportunidade.id(), model, prompt.length()
+        );
+
         try {
             Map<?, ?> resposta = restClient.post()
                     .uri("/responses")
@@ -70,10 +83,16 @@ public class OpenAiAderenciaService {
             String analise = resposta != null && resposta.get("output_text") != null
                     ? resposta.get("output_text").toString()
                     : "Sem retorno textual da avaliação de IA.";
+            int nota = extrairNota(analise);
+            LOGGER.info(
+                    "Resposta OpenAI processada. oportunidadeId={}, nota={}, caracteresAnalise={}, retornoTextualPresente={}",
+                    oportunidade.id(), nota, analise.length(), resposta != null && resposta.get("output_text") != null
+            );
             return new AvaliacaoAderenciaResultado(
-                    oportunidade.id(), oportunidade.titulo(), oportunidade.empresa(), extrairNota(analise), analise, "AVALIADA"
+                    oportunidade.id(), oportunidade.titulo(), oportunidade.empresa(), nota, analise, "AVALIADA"
             );
         } catch (Exception e) {
+            LOGGER.error("Falha na avaliação OpenAI. oportunidadeId={}, model={}, erro={}", oportunidade.id(), model, e.getMessage(), e);
             return new AvaliacaoAderenciaResultado(
                     oportunidade.id(), oportunidade.titulo(), oportunidade.empresa(), 0,
                     "Avaliação indisponível no momento: " + e.getMessage(), "ERRO"
@@ -84,6 +103,7 @@ public class OpenAiAderenciaService {
     private int extrairNota(String analise) {
         Matcher matcher = NOTA_PATTERN.matcher(analise == null ? "" : analise);
         if (!matcher.find()) {
+            LOGGER.warn("Não foi possível extrair nota_aderencia da resposta da OpenAI. caracteresAnalise={}", analise == null ? 0 : analise.length());
             return 0;
         }
         int nota = Integer.parseInt(matcher.group(1));
@@ -100,6 +120,7 @@ public class OpenAiAderenciaService {
         try {
             return Files.readString(Path.of(apiKeyFile)).trim();
         } catch (Exception e) {
+            LOGGER.warn("Não foi possível ler OPENAI_API_KEY_FILE em {}: {}", apiKeyFile, e.getMessage());
             return "";
         }
     }
