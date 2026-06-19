@@ -2,6 +2,7 @@
 
 var http = require('http');
 var https = require('https');
+var loopback = require('loopback');
 var url = require('url');
 
 var DEFAULT_AVALIADOR_URL = 'http://avaliador-aderencia:8082';
@@ -29,37 +30,130 @@ module.exports = function(app) {
     );
   });
 
-  app.post('/api/avaliador-aderencia/resultados', function(req, res) {
-    salvarResultadoAderencia(app, req.body, function(err) {
-      if (err) {
-        res.status(500).json({recebido: false, erro: err.message});
-        return;
-      }
-      app.emit('avaliador-aderencia:resultado', req.body);
-      res.status(202).json({recebido: true});
-    });
-  });
+  app.post(
+    '/api/avaliador-aderencia/resultados',
+    loopback.json({limit: '100kb'}),
+    function(req, res) {
+      registrarRecebimentoResultado(req);
+
+      salvarResultadoAderencia(app, req.body, function(err) {
+        if (err) {
+          console.error(
+            '[avaliador-aderencia] Resultado rejeitado pelo backend.',
+            {
+              erro: err.message,
+              body: resumirPayload(req.body),
+            }
+          );
+          res.status(500).json({recebido: false, erro: err.message});
+          return;
+        }
+        app.emit('avaliador-aderencia:resultado', req.body);
+        res.status(202).json({recebido: true});
+      });
+    }
+  );
 };
 
 function salvarResultadoAderencia(app, body, callback) {
   var resultado = body && body.resultado ? body.resultado : body;
   var oportunidadeId = resultado && resultado.oportunidadeId;
+  var status = normalizarStatus(resultado && resultado.status);
 
   if (!oportunidadeId) {
     callback(new Error('Resultado de aderencia sem oportunidadeId.'));
     return;
   }
 
+  console.log('[avaliador-aderencia] Salvando resultado recebido.', {
+    oportunidadeId: oportunidadeId,
+    notaAderencia: resultado.notaAderencia,
+    status: status,
+    analiseIaTamanho: tamanhoTexto(resultado.analiseIa),
+  });
+
   app.models.OportunidadeLinkedin.updateAll(
     {id: oportunidadeId},
     {
       notaAderencia: resultado.notaAderencia,
       analiseAderenciaIa: resultado.analiseIa,
-      statusAderencia: resultado.status || 'avaliada',
+      statusAderencia: status,
       dataAvaliacaoAderencia: new Date(),
     },
-    callback
+    function(err, info) {
+      if (err) {
+        callback(err);
+        return;
+      }
+
+      console.log('[avaliador-aderencia] Resultado salvo no backend.', {
+        oportunidadeId: oportunidadeId,
+        linhasAfetadas: obterLinhasAfetadas(info),
+      });
+      callback(null, info);
+    }
   );
+}
+
+function registrarRecebimentoResultado(req) {
+  console.log('[avaliador-aderencia] Resultado recebido pelo backend.', {
+    contentType: req.headers['content-type'],
+    contentLength: req.headers['content-length'],
+    userAgent: req.headers['user-agent'],
+    bodyPresente: !!req.body,
+    body: resumirPayload(req.body),
+  });
+}
+
+function resumirPayload(body) {
+  if (!body) {
+    return body;
+  }
+
+  var resultado = body.resultado || body;
+  return {
+    chaves: Object.keys(body),
+    resultadoChaves: obterChaves(resultado),
+    oportunidadeId: resultado && resultado.oportunidadeId,
+    notaAderencia: resultado && resultado.notaAderencia,
+    status: resultado && resultado.status,
+    analiseIaTamanho: resultado ? tamanhoTexto(resultado.analiseIa) : 0,
+    preview: limitarTexto(body),
+  };
+}
+
+function limitarTexto(valor) {
+  var texto = JSON.stringify(valor);
+
+  if (!texto) {
+    return texto;
+  }
+
+  if (texto.length > 500) {
+    return texto.substring(0, 500) + '...[truncado]';
+  }
+
+  return texto;
+}
+
+function obterChaves(valor) {
+  return valor && typeof valor === 'object' ? Object.keys(valor) : [];
+}
+
+function tamanhoTexto(valor) {
+  return valor ? String(valor).length : 0;
+}
+
+function normalizarStatus(status) {
+  return status ? String(status).toLowerCase() : 'avaliada';
+}
+
+function obterLinhasAfetadas(info) {
+  if (!info) {
+    return null;
+  }
+
+  return info.count || info.affectedRows || null;
 }
 
 function garantirColunasAderencia(app) {
@@ -77,31 +171,37 @@ function garantirColunasAderencia(app) {
     {nome: 'dataAvaliacaoAderencia', definicao: 'DATETIME NULL'},
   ];
 
-  connector.query('SHOW COLUMNS FROM OportunidadeLinkedin', function(err, existentes) {
-    if (err || !existentes) {
-      console.error('Não foi possível verificar colunas de aderência.', err);
-      return;
-    }
+  connector.query(
+    'SHOW COLUMNS FROM OportunidadeLinkedin',
+    function(err, existentes) {
+      if (err || !existentes) {
+        console.error('Não foi possível verificar colunas de aderência.', err);
+        return;
+      }
 
-    var nomesExistentes = existentes.map(function(coluna) {
-      return coluna.Field;
-    });
-
-    colunas
-      .filter(function(coluna) {
-        return nomesExistentes.indexOf(coluna.nome) < 0;
-      })
-      .forEach(function(coluna) {
-        connector.query(
-          'ALTER TABLE OportunidadeLinkedin ADD COLUMN ' + coluna.nome + ' ' + coluna.definicao,
-          function(alterErr) {
-            if (alterErr) {
-              console.error('Não foi possível criar coluna ' + coluna.nome + ' em OportunidadeLinkedin.', alterErr);
-            }
-          }
-        );
+      var nomesExistentes = existentes.map(function(coluna) {
+        return coluna.Field;
       });
-  });
+
+      colunas
+        .filter(function(coluna) {
+          return nomesExistentes.indexOf(coluna.nome) < 0;
+        })
+        .forEach(function(coluna) {
+          var sql = 'ALTER TABLE OportunidadeLinkedin ADD COLUMN ' +
+            coluna.nome + ' ' + coluna.definicao;
+          connector.query(sql, function(alterErr) {
+            if (alterErr) {
+              console.error(
+                'Não foi possível criar coluna ' + coluna.nome +
+                ' em OportunidadeLinkedin.',
+                alterErr
+              );
+            }
+          });
+        });
+    }
+  );
 }
 
 function proxyJson(baseUrl, path, method, body, res) {
