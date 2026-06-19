@@ -47,6 +47,10 @@ export class OportunidadesSelecionadasComponent implements OnInit {
     this.carregando = false;
   }
 
+  getClasseScore(score: number = 0): string {
+    return score >= 85 ? 'score-alto' : 'score-medio';
+  }
+
   private isModeloPresencialOuHibrido(oportunidade: OportunidadeSelecionada): boolean {
     const texto = [
       oportunidade.modelo,

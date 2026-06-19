@@ -1,15 +1,217 @@
-.oportunidades-selecionadas .score {
-  background: #2f9e44;
+.oportunidades-selecionadas {
+  color: #1f2933;
+}
+
+.oportunidades-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.oportunidades-header small {
+  color: #6b7280;
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: normal;
+  margin-top: 4px;
+  text-transform: none;
+}
+
+.resumo-selecionadas {
+  display: grid;
+  grid-gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin-bottom: 18px;
+}
+
+.resumo-selecionadas div {
+  background: linear-gradient(135deg, #f8fbff 0%, #eef6ff 100%);
+  border: 1px solid #d8e8fb;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.resumo-selecionadas strong {
+  color: #1769aa;
+  display: block;
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.resumo-selecionadas span {
+  color: #5f6f82;
+  display: block;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.oportunidades-lista {
+  display: grid;
+  grid-gap: 16px;
+}
+
+.oportunidade-card {
+  background: #fff;
+  border: 1px solid #e3e8ef;
+  border-radius: 16px;
+  box-shadow: 0 10px 24px rgba(31, 41, 51, 0.08);
+  overflow: hidden;
+}
+
+.card-topo {
+  align-items: flex-start;
+  background: linear-gradient(135deg, #ffffff 0%, #f7fbff 100%);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 18px 20px;
+}
+
+.titulo-area {
+  min-width: 0;
+}
+
+.posicao {
+  background: #e8f2ff;
+  border-radius: 999px;
+  color: #1769aa;
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  padding: 4px 10px;
+}
+
+.card-topo h3 {
+  color: #111827;
+  font-size: 21px;
+  line-height: 1.25;
+  margin: 0 0 8px;
+}
+
+.meta-linha {
+  color: #64748b;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 13px;
+  gap: 7px;
+}
+
+.empresa {
+  color: #334155;
+  font-weight: 700;
+}
+
+.separador {
+  color: #a0aec0;
+}
+
+.score-box {
+  align-items: center;
   border-radius: 18px;
   color: #fff;
-  display: inline-block;
-  font-weight: 700;
-  min-width: 46px;
-  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: 68px;
+  justify-content: center;
+  min-width: 74px;
+  padding: 8px 12px;
   text-align: center;
 }
 
-.oportunidades-selecionadas .analise {
-  max-width: 420px;
-  white-space: normal;
+.score-box span {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.score-box small {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+
+.score-alto {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+}
+
+.score-medio {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.analise-card {
+  background: #f8fafc;
+  border-top: 1px solid #e5edf6;
+  padding: 18px 20px;
+}
+
+.analise-titulo {
+  align-items: center;
+  color: #0f766e;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.icone-analise {
+  align-items: center;
+  background: #ccfbf1;
+  border-radius: 50%;
+  color: #0f766e;
+  display: inline-flex;
+  font-weight: 800;
+  height: 24px;
+  justify-content: center;
+  width: 24px;
+}
+
+.analise-card p {
+  color: #263445;
+  font-size: 15px;
+  line-height: 1.65;
+  margin: 0;
+  max-width: 980px;
+  white-space: pre-line;
+}
+
+.card-acoes {
+  align-items: center;
+  display: flex;
+  justify-content: flex-end;
+  padding: 14px 20px 18px;
+}
+
+.card-acoes .btn {
+  border-radius: 999px;
+  font-weight: 700;
+  padding-left: 18px;
+  padding-right: 18px;
+  text-transform: lowercase;
+}
+
+.sem-link {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+@media (max-width: 700px) {
+  .oportunidades-header,
+  .card-topo {
+    display: block;
+  }
+
+  .oportunidades-header .btn {
+    margin-top: 12px;
+  }
+
+  .score-box {
+    margin-top: 14px;
+  }
+
+  .card-acoes {
+    justify-content: flex-start;
+  }
 }

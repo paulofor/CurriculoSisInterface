@@ -1,7 +1,10 @@
 <div class="dgc-painel oportunidades-selecionadas">
-  <div class="dgc-painel-header">
-    <span>Oportunidades selecionadas</span>
-    <button class="btn btn-primary btn-sm dgc-botao-comando dgc-direita" (click)="carregarSelecionadas()" [disabled]="carregando">
+  <div class="dgc-painel-header oportunidades-header">
+    <div>
+      <span>Oportunidades selecionadas</span>
+      <small>Vagas remotas priorizadas por aderência ao currículo</small>
+    </div>
+    <button class="btn btn-primary btn-sm dgc-botao-comando" (click)="carregarSelecionadas()" [disabled]="carregando">
       atualizar lista
     </button>
   </div>
@@ -19,33 +22,57 @@
       Nenhuma oportunidade selecionada ainda. A lista mostra vagas remotas avaliadas com score de aderência igual ou superior a 70.
     </div>
 
-    <div class="table-responsive" *ngIf="!carregando && !erro && oportunidades.length > 0">
-      <table class="table table-striped table-hover">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Score</th>
-            <th>Oportunidade</th>
-            <th>Empresa</th>
-            <th>Modelo</th>
-            <th>Avaliada em</th>
-            <th>Análise</th>
-            <th>Link</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let item of oportunidades; let indice = index">
-            <td>{{ indice + 1 }}</td>
-            <td><span class="score">{{ item.notaAderencia }}</span></td>
-            <td>{{ item.titulo }}</td>
-            <td>{{ item.empresa || '—' }}</td>
-            <td>{{ item.modelo || '—' }}</td>
-            <td>{{ item.dataAvaliacaoAderencia | date:'dd/MM/yyyy HH:mm' }}</td>
-            <td class="analise">{{ item.analiseAderenciaIa || '—' }}</td>
-            <td><a *ngIf="item.url" [href]="item.url" target="_blank" rel="noopener noreferrer">abrir</a></td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="resumo-selecionadas" *ngIf="!carregando && !erro && oportunidades.length > 0">
+      <div>
+        <strong>{{ oportunidades.length }}</strong>
+        <span>oportunidades selecionadas</span>
+      </div>
+      <div>
+        <strong>70+</strong>
+        <span>score mínimo de aderência</span>
+      </div>
+      <div>
+        <strong>Remoto</strong>
+        <span>presencial e híbrido filtrados</span>
+      </div>
+    </div>
+
+    <div class="oportunidades-lista" *ngIf="!carregando && !erro && oportunidades.length > 0">
+      <article class="oportunidade-card" *ngFor="let item of oportunidades; let indice = index">
+        <div class="card-topo">
+          <div class="titulo-area">
+            <span class="posicao">#{{ indice + 1 }}</span>
+            <h3>{{ item.titulo }}</h3>
+            <div class="meta-linha">
+              <span class="empresa">{{ item.empresa || 'Empresa não informada' }}</span>
+              <span class="separador">•</span>
+              <span>{{ item.modelo || 'Modelo não informado' }}</span>
+              <span class="separador" *ngIf="item.dataAvaliacaoAderencia">•</span>
+              <span *ngIf="item.dataAvaliacaoAderencia">{{ item.dataAvaliacaoAderencia | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+          </div>
+
+          <div class="score-box" [ngClass]="getClasseScore(item.notaAderencia)">
+            <span>{{ item.notaAderencia }}</span>
+            <small>score</small>
+          </div>
+        </div>
+
+        <div class="analise-card" *ngIf="item.analiseAderenciaIa">
+          <div class="analise-titulo">
+            <span class="icone-analise">✓</span>
+            <strong>Análise de aderência</strong>
+          </div>
+          <p>{{ item.analiseAderenciaIa }}</p>
+        </div>
+
+        <div class="card-acoes">
+          <a class="btn btn-outline-primary btn-sm" *ngIf="item.url" [href]="item.url" target="_blank" rel="noopener noreferrer">
+            abrir oportunidade
+          </a>
+          <span class="sem-link" *ngIf="!item.url">Link não informado</span>
+        </div>
+      </article>
     </div>
   </div>
 </div>
