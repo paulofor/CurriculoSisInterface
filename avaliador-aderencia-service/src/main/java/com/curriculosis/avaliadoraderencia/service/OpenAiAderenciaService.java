@@ -2,6 +2,8 @@ package com.curriculosis.avaliadoraderencia.service;
 
 import com.curriculosis.avaliadoraderencia.dto.AvaliacaoAderenciaResultado;
 import com.curriculosis.avaliadoraderencia.dto.OportunidadeBackend;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,8 +25,10 @@ public class OpenAiAderenciaService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OpenAiAderenciaService.class);
     private static final Pattern NOTA_PATTERN = Pattern.compile("nota_aderencia\\s*[:=]\\s*(\\d{1,3})", Pattern.CASE_INSENSITIVE);
+    private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {};
 
     private final RestClient restClient;
+    private final ObjectMapper objectMapper;
     private final String apiKey;
     private final String model;
     private final CurriculoReferenciaService curriculoReferenciaService;
@@ -32,9 +37,11 @@ public class OpenAiAderenciaService {
             @Value("${openai.api.key:}") String apiKey,
             @Value("${openai.api.key.file:}") String apiKeyFile,
             @Value("${openai.model:gpt-5.2}") String model,
-            CurriculoReferenciaService curriculoReferenciaService
+            CurriculoReferenciaService curriculoReferenciaService,
+            ObjectMapper objectMapper
     ) {
         this.restClient = RestClient.builder().baseUrl("https://api.openai.com/v1").build();
+        this.objectMapper = objectMapper;
         this.apiKey = resolverApiKey(apiKey, apiKeyFile);
         this.model = model;
         this.curriculoReferenciaService = curriculoReferenciaService;
@@ -54,8 +61,9 @@ public class OpenAiAderenciaService {
         }
 
         String prompt = "Avalie quanto a oportunidade abaixo é aderente ao currículo de referência. " +
-                "Responda em português no formato: nota_aderencia: N; justificativa: texto curto; riscos: texto curto. " +
-                "A nota deve ser um número inteiro de 0 a 100. Considere a exigência de inglês fluente como forte redutor.\n\n" +
+                "Responda exclusivamente no JSON definido pelo schema. " +
+                "A nota_aderencia deve ser um número inteiro de 0 a 100. " +
+                "Considere a exigência de inglês fluente como forte redutor.\n\n" +
                 "Currículo de referência: " + curriculoReferenciaService.obterResumoCurriculo() + "\n\n" +
                 "Oportunidade: " + texto(oportunidade.titulo()) + "\n" +
                 "Empresa: " + texto(oportunidade.empresa()) + "\n" +
@@ -63,7 +71,8 @@ public class OpenAiAderenciaService {
 
         Map<String, Object> payload = Map.of(
                 "model", model,
-                "input", List.of(Map.of("role", "user", "content", prompt))
+                "input", List.of(Map.of("role", "user", "content", prompt)),
+                "text", Map.of("format", schemaRespostaAderencia())
         );
 
         LOGGER.info(
@@ -80,13 +89,13 @@ public class OpenAiAderenciaService {
                     .retrieve()
                     .body(Map.class);
 
-            String analise = resposta != null && resposta.get("output_text") != null
-                    ? resposta.get("output_text").toString()
-                    : "Sem retorno textual da avaliação de IA.";
-            int nota = extrairNota(analise);
+            String outputText = extrairOutputText(resposta).orElse("");
+            ResultadoEstruturado resultadoEstruturado = interpretarResultadoEstruturado(outputText);
+            int nota = resultadoEstruturado.notaAderencia();
+            String analise = resultadoEstruturado.analise();
             LOGGER.info(
                     "Resposta OpenAI processada. oportunidadeId={}, nota={}, caracteresAnalise={}, retornoTextualPresente={}",
-                    oportunidade.id(), nota, analise.length(), resposta != null && resposta.get("output_text") != null
+                    oportunidade.id(), nota, analise.length(), !outputText.isBlank()
             );
             return new AvaliacaoAderenciaResultado(
                     oportunidade.id(), oportunidade.titulo(), oportunidade.empresa(), nota, analise, "AVALIADA"
@@ -98,6 +107,97 @@ public class OpenAiAderenciaService {
                     "Avaliação indisponível no momento: " + e.getMessage(), "ERRO"
             );
         }
+    }
+
+    private Map<String, Object> schemaRespostaAderencia() {
+        return Map.of(
+                "type", "json_schema",
+                "name", "avaliacao_aderencia_oportunidade",
+                "strict", true,
+                "schema", Map.of(
+                        "type", "object",
+                        "additionalProperties", false,
+                        "required", List.of("nota_aderencia", "justificativa", "riscos"),
+                        "properties", Map.of(
+                                "nota_aderencia", Map.of(
+                                        "type", "integer",
+                                        "description", "Nota de aderência da oportunidade ao currículo de referência, de 0 a 100."
+                                ),
+                                "justificativa", Map.of(
+                                        "type", "string",
+                                        "description", "Resumo curto em português explicando a aderência."
+                                ),
+                                "riscos", Map.of(
+                                        "type", "string",
+                                        "description", "Principais lacunas ou riscos da oportunidade para o currículo."
+                                )
+                        )
+                )
+        );
+    }
+
+    private Optional<String> extrairOutputText(Map<?, ?> resposta) {
+        if (resposta == null) {
+            return Optional.empty();
+        }
+        Object outputText = resposta.get("output_text");
+        if (outputText != null && !outputText.toString().isBlank()) {
+            return Optional.of(outputText.toString());
+        }
+        Object output = resposta.get("output");
+        if (!(output instanceof List<?> outputItems)) {
+            return Optional.empty();
+        }
+        for (Object outputItem : outputItems) {
+            if (!(outputItem instanceof Map<?, ?> outputMap)) {
+                continue;
+            }
+            Object content = outputMap.get("content");
+            if (!(content instanceof List<?> contentItems)) {
+                continue;
+            }
+            for (Object contentItem : contentItems) {
+                if (!(contentItem instanceof Map<?, ?> contentMap)) {
+                    continue;
+                }
+                Object text = contentMap.get("text");
+                if (text != null && !text.toString().isBlank()) {
+                    return Optional.of(text.toString());
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private ResultadoEstruturado interpretarResultadoEstruturado(String outputText) {
+        if (outputText == null || outputText.isBlank()) {
+            LOGGER.warn("Resposta OpenAI sem texto estruturado para avaliação de aderência.");
+            return new ResultadoEstruturado(0, "Sem retorno textual da avaliação de IA.");
+        }
+        try {
+            Map<String, Object> json = objectMapper.readValue(outputText, MAP_TYPE);
+            int nota = normalizarNota(json.get("nota_aderencia"));
+            String justificativa = texto(json.get("justificativa"));
+            String riscos = texto(json.get("riscos"));
+            return new ResultadoEstruturado(nota, "justificativa: " + justificativa + "; riscos: " + riscos);
+        } catch (Exception e) {
+            LOGGER.warn("Não foi possível interpretar JSON estruturado da OpenAI. erro={}", e.getMessage());
+            return new ResultadoEstruturado(extrairNota(outputText), outputText);
+        }
+    }
+
+    private int normalizarNota(Object valor) {
+        if (valor instanceof Number number) {
+            return Math.max(0, Math.min(100, number.intValue()));
+        }
+        if (valor != null) {
+            try {
+                return Math.max(0, Math.min(100, Integer.parseInt(valor.toString())));
+            } catch (NumberFormatException e) {
+                LOGGER.warn("nota_aderencia estruturada inválida: {}", valor);
+            }
+        }
+        return 0;
     }
 
     private int extrairNota(String analise) {
@@ -127,5 +227,12 @@ public class OpenAiAderenciaService {
 
     private String texto(String valor) {
         return valor == null || valor.isBlank() ? "Não informado" : valor;
+    }
+
+    private String texto(Object valor) {
+        return valor == null || valor.toString().isBlank() ? "Não informado" : valor.toString();
+    }
+
+    private record ResultadoEstruturado(int notaAderencia, String analise) {
     }
 }
