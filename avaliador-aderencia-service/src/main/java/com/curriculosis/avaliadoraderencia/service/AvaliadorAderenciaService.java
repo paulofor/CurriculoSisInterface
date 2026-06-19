@@ -52,12 +52,14 @@ public class AvaliadorAderenciaService {
             LOGGER.debug("Scheduler de aderência desabilitado.");
             return;
         }
+        LOGGER.info("Execução agendada do avaliador de aderência iniciada. cron={}, tamanhoLote={}", cron, tamanhoLotePadrao);
         executar(tamanhoLotePadrao);
     }
 
     public synchronized ExecucaoAvaliacaoResponse executar(int limite) {
         Instant inicio = Instant.now();
         ultimaExecucaoInicio = inicio;
+        LOGGER.info("Execução do avaliador de aderência iniciada. limite={}, inicio={}", limite, inicio);
         LOGGER.info("Iniciando ciclo de avaliação de aderência. limite={}, inicio={}", limite, inicio);
 
         List<OportunidadeBackend> oportunidades = null;
