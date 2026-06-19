@@ -45,3 +45,7 @@
 
 ## 2026-06-17 18:41 (UTC-3)
 - Otimizado o Dockerfile do `analise-oportunidades-service` para baixar dependências Maven em uma camada separada (`dependency:go-offline`) antes de copiar o código-fonte, reduzindo rebuilds longos no GitHub Actions quando apenas arquivos `src` mudam.
+
+## 2026-06-18 23:35 (UTC-3)
+- Corrigido o `avaliador-aderencia-service` para chamar o backend LoopBack com o filtro de oportunidades como `URI` já codificada, evitando dupla codificação do JSON do parâmetro `filter` e o erro 400 `Value is not an object` ao buscar oportunidades pendentes.
+- Adicionado teste cobrindo que a URI de busca de oportunidades pendentes mantém o filtro codificado apenas uma vez.
