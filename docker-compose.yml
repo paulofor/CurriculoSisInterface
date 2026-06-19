@@ -73,7 +73,7 @@ services:
       - LOGGING_FILE_NAME=/var/log/curriculosis/avaliador-aderencia.log
       - AVALIADOR_BACKEND_BASE_URL=http://backend:25012
       - AVALIADOR_BACKEND_RESULTADOS_PATH=/api/avaliador-aderencia/resultados
-      - AVALIADOR_SCHEDULER_CRON=0 0 */6 * * *
+      - AVALIADOR_SCHEDULER_CRON=0 0 * * * *
       - AVALIADOR_LOTE_TAMANHO=10
     volumes:
       - backend-logs:/var/log/curriculosis
