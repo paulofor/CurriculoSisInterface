@@ -49,3 +49,7 @@
 ## 2026-06-18 23:35 (UTC-3)
 - Corrigido o `avaliador-aderencia-service` para chamar o backend LoopBack com o filtro de oportunidades como `URI` já codificada, evitando dupla codificação do JSON do parâmetro `filter` e o erro 400 `Value is not an object` ao buscar oportunidades pendentes.
 - Adicionado teste cobrindo que a URI de busca de oportunidades pendentes mantém o filtro codificado apenas uma vez.
+
+## 2026-06-19 09:36 (UTC-3)
+- Corrigido o `avaliador-aderencia-service` para solicitar resposta estruturada da OpenAI via JSON Schema na Responses API e interpretar o texto retornado tanto por `output_text` quanto pela lista `output[].content[].text`.
+- Ajustado o envio de resultados do avaliador ao backend para postar um JSON plano com `oportunidadeId`, `notaAderencia`, `analiseIa` e `status`, evitando rejeição do callback com erro `Resultado de aderencia sem oportunidadeId`.

@@ -6,12 +6,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -57,9 +59,18 @@ public class BackendOportunidadesClient {
                 "Enviando resultado de aderência ao backend. oportunidadeId={}, status={}, nota={}, path={}",
                 resultado.oportunidadeId(), resultado.status(), resultado.notaAderencia(), resultadosPath
         );
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("oportunidadeId", resultado.oportunidadeId());
+        payload.put("titulo", resultado.titulo());
+        payload.put("empresa", resultado.empresa());
+        payload.put("notaAderencia", resultado.notaAderencia());
+        payload.put("analiseIa", resultado.analiseIa());
+        payload.put("status", resultado.status());
+
         restClient.post()
                 .uri(resultadosPath)
-                .body(Map.of("resultado", resultado))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(payload)
                 .retrieve()
                 .toBodilessEntity();
         LOGGER.info("Resultado de aderência enviado ao backend com sucesso. oportunidadeId={}", resultado.oportunidadeId());
