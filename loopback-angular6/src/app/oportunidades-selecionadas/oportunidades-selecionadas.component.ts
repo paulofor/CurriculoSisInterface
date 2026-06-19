@@ -36,7 +36,8 @@ export class OportunidadesSelecionadasComponent implements OnInit {
   }
 
   private aplicarResposta(oportunidades: OportunidadeSelecionada[]) {
-    this.oportunidades = oportunidades || [];
+    this.oportunidades = (oportunidades || [])
+      .filter(oportunidade => !this.isModeloPresencialOuHibrido(oportunidade));
     this.carregando = false;
   }
 
@@ -46,12 +47,31 @@ export class OportunidadesSelecionadasComponent implements OnInit {
     this.carregando = false;
   }
 
+  private isModeloPresencialOuHibrido(oportunidade: OportunidadeSelecionada): boolean {
+    const texto = [
+      oportunidade.modelo,
+      oportunidade.analiseAderenciaIa,
+      oportunidade.descricao
+    ]
+      .filter(valor => !!valor)
+      .join(' ')
+      .toLowerCase();
+
+    return texto.indexOf('presencial') >= 0
+      || texto.indexOf('híbrido') >= 0
+      || texto.indexOf('hibrido') >= 0
+      || texto.indexOf('hybrid') >= 0
+      || texto.indexOf('on-site') >= 0
+      || texto.indexOf('onsite') >= 0;
+  }
+
   private getFiltroSelecionadas() {
     return {
       where: {
         and: [
           { notaAderencia: { gte: 70 } },
-          { statusAderencia: 'avaliada' }
+          { statusAderencia: 'avaliada' },
+          { modelo: { nin: ['Presencial', 'presencial', 'Híbrido', 'Hibrido', 'híbrido', 'hibrido'] } }
         ]
       },
       order: 'notaAderencia DESC',
