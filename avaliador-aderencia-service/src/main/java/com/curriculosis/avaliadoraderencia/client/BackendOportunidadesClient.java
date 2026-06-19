@@ -9,6 +9,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -36,11 +37,15 @@ public class BackendOportunidadesClient {
         String filter = "{\"where\":{\"and\":[{\"descricao\":{\"neq\":null}},{\"maisRecente\":1}]},\"order\":\"data DESC\",\"limit\":" + limite + "}";
         LOGGER.info("Buscando oportunidades pendentes no backend. baseUrl={}, limite={}, filter={}", backendBaseUrl, limite, filter);
         List<OportunidadeBackend> oportunidades = restClient.get()
-                .uri("/api/OportunidadeLinkedins?filter=" + encodeQueryParam(filter))
+                .uri(buildOportunidadesPendentesUri(filter))
                 .retrieve()
                 .body(new ParameterizedTypeReference<List<OportunidadeBackend>>() {});
         LOGGER.info("Backend retornou {} oportunidades pendentes para avaliação.", oportunidades == null ? 0 : oportunidades.size());
         return oportunidades;
+    }
+
+    static URI buildOportunidadesPendentesUri(String filter) {
+        return URI.create("/api/OportunidadeLinkedins?filter=" + encodeQueryParam(filter));
     }
 
     static String encodeQueryParam(String value) {
