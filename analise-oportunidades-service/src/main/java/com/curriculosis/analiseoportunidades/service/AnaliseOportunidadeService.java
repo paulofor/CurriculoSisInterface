@@ -204,13 +204,26 @@ public class AnaliseOportunidadeService {
         }
 
         Set<String> marcadoresIngles = Set.of(
-                "job", "remote", "responsibilities", "requirements", "required", "experience", "skills",
-                "developer", "engineer", "software", "team", "work", "years", "strong", "knowledge",
-                "ability", "build", "design", "develop", "systems", "applications", "cloud", "english"
+                "ability", "across", "applications", "are", "availability", "based", "build", "cloud",
+                "collaborate", "design", "develop", "developer", "engineer", "english", "evaluate",
+                "experience", "flexible", "for", "fully", "global", "hours", "join", "job", "knowledge",
+                "looking", "mode", "overview", "paid", "program", "project", "remote", "required",
+                "requirements", "responsibilities", "role", "schedule", "skills", "software", "strong",
+                "systems", "tasks", "team", "title", "training", "week", "work", "years"
+        );
+        Set<String> marcadoresPortugues = Set.of(
+                "aos", "atuar", "buscamos", "candidato", "colaboração", "com", "conhecimento", "desenvolvedor",
+                "desenvolvedora", "equipe", "experiência", "forma", "habilidades", "modelo", "oportunidade",
+                "para", "perfil", "pessoa", "projeto", "remoto", "requisitos", "responsabilidades", "sobre",
+                "time", "trabalho", "vaga"
         );
 
-        long ocorrencias = termos.stream().filter(marcadoresIngles::contains).count();
-        double proporcao = (double) ocorrencias / termos.size();
-        return ocorrencias >= 5 && proporcao >= 0.12;
+        long ocorrenciasIngles = termos.stream().filter(marcadoresIngles::contains).count();
+        long ocorrenciasPortugues = termos.stream().filter(marcadoresPortugues::contains).count();
+        double proporcaoIngles = (double) ocorrenciasIngles / termos.size();
+
+        return ocorrenciasIngles >= 8
+                && proporcaoIngles >= 0.18
+                && ocorrenciasIngles >= (ocorrenciasPortugues * 2) + 4;
     }
 }

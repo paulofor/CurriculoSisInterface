@@ -53,3 +53,6 @@
 ## 2026-06-19 09:36 (UTC-3)
 - Corrigido o `avaliador-aderencia-service` para solicitar resposta estruturada da OpenAI via JSON Schema na Responses API e interpretar o texto retornado tanto por `output_text` quanto pela lista `output[].content[].text`.
 - Ajustado o envio de resultados do avaliador ao backend para postar um JSON plano com `oportunidadeId`, `notaAderencia`, `analiseIa` e `status`, evitando rejeição do callback com erro `Resultado de aderencia sem oportunidadeId`.
+
+## 2026-06-19
+- Reforçada a regra do `analise-oportunidades-service` para descartar oportunidades cujo texto esteja todo em inglês, mesmo quando não há exigência explícita de inglês fluente/avançado, preservando vagas em português com termos técnicos em inglês.
