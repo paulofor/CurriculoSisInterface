@@ -215,3 +215,51 @@
     justify-content: flex-start;
   }
 }
+
+.resumo-selecionadas small {
+  color: #7b8794;
+  display: block;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.acoes-topo {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 10px;
+}
+
+.curriculo-enviado {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  color: #1d4ed8;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 7px;
+  margin: 0;
+  padding: 7px 11px;
+  white-space: nowrap;
+}
+
+.curriculo-enviado.marcado {
+  background: #ecfdf5;
+  border-color: #86efac;
+  color: #15803d;
+}
+
+.curriculo-enviado input {
+  cursor: pointer;
+  margin: 0;
+}
+
+.curriculo-enviado input:disabled,
+.curriculo-enviado input:disabled + span {
+  cursor: wait;
+  opacity: 0.65;
+}
