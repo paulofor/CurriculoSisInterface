@@ -2,7 +2,7 @@
   <div class="dgc-painel-header oportunidades-header">
     <div>
       <span>Oportunidades selecionadas</span>
-      <small>Vagas remotas priorizadas por aderência ao currículo</small>
+      <small>Janela dos últimos 3 meses; vagas anteriores não são tratadas nesta tela</small>
     </div>
     <button class="btn btn-primary btn-sm dgc-botao-comando" (click)="carregarSelecionadas()" [disabled]="carregando">
       atualizar lista
@@ -19,21 +19,29 @@
     </div>
 
     <div class="alert alert-warning" *ngIf="!carregando && !erro && oportunidades.length === 0">
-      Nenhuma oportunidade selecionada ainda. A lista mostra vagas remotas avaliadas com score de aderência igual ou superior a 70.
+      Nenhuma oportunidade selecionada na janela de 3 meses. A lista mostra vagas remotas avaliadas com score de aderência igual ou superior a 70.
     </div>
 
-    <div class="resumo-selecionadas" *ngIf="!carregando && !erro && oportunidades.length > 0">
+    <div class="resumo-selecionadas" *ngIf="!carregando && !erro">
       <div>
-        <strong>{{ oportunidades.length }}</strong>
-        <span>oportunidades selecionadas</span>
+        <strong>{{ resumoJanela.total }}</strong>
+        <span>vagas nos últimos 3 meses</span>
+        <small>{{ getPercentual(resumoJanela.total) }}% da janela</small>
       </div>
       <div>
-        <strong>70+</strong>
-        <span>score mínimo de aderência</span>
+        <strong>{{ resumoJanela.selecionadas }}</strong>
+        <span>selecionadas para análise</span>
+        <small>{{ getPercentual(resumoJanela.selecionadas) }}% do total</small>
       </div>
       <div>
-        <strong>Remoto</strong>
-        <span>presencial e híbrido filtrados</span>
+        <strong>{{ resumoJanela.descartadas }}</strong>
+        <span>descartadas</span>
+        <small>{{ getPercentual(resumoJanela.descartadas) }}% do total</small>
+      </div>
+      <div>
+        <strong>{{ resumoJanela.pendentes }}</strong>
+        <span>faltam analisar</span>
+        <small>{{ getPercentual(resumoJanela.pendentes) }}% do total</small>
       </div>
     </div>
 
@@ -52,9 +60,15 @@
             </div>
           </div>
 
-          <div class="score-box" [ngClass]="getClasseScore(item.notaAderencia)">
-            <span>{{ item.notaAderencia }}</span>
-            <small>score</small>
+          <div class="acoes-topo">
+            <label class="curriculo-enviado" [class.marcado]="isCurriculoEnviado(item)">
+              <input type="checkbox" [checked]="isCurriculoEnviado(item)" [disabled]="item.atualizandoEnvio" (change)="alternarCurriculoEnviado(item)">
+              <span>{{ isCurriculoEnviado(item) ? 'currículo enviado' : 'marcar currículo enviado' }}</span>
+            </label>
+            <div class="score-box" [ngClass]="getClasseScore(item.notaAderencia)">
+              <span>{{ item.notaAderencia }}</span>
+              <small>score</small>
+            </div>
           </div>
         </div>
 

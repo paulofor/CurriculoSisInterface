@@ -6,6 +6,15 @@ interface OportunidadeSelecionada extends OportunidadeLinkedinInterface {
   analiseAderenciaIa?: string;
   statusAderencia?: string;
   dataAvaliacaoAderencia?: Date;
+  dataEnvio?: Date;
+  atualizandoEnvio?: boolean;
+}
+
+interface ResumoJanelaVagas {
+  total: number;
+  selecionadas: number;
+  descartadas: number;
+  pendentes: number;
 }
 
 @Component({
@@ -17,6 +26,12 @@ export class OportunidadesSelecionadasComponent implements OnInit {
   carregando = false;
   erro = '';
   oportunidades: OportunidadeSelecionada[] = [];
+  resumoJanela: ResumoJanelaVagas = {
+    total: 0,
+    selecionadas: 0,
+    descartadas: 0,
+    pendentes: 0
+  };
 
   constructor(private oportunidadeLinkedinApi: OportunidadeLinkedinApi) { }
 
@@ -31,13 +46,54 @@ export class OportunidadesSelecionadasComponent implements OnInit {
     this.oportunidadeLinkedinApi.find(this.getFiltroSelecionadas())
       .subscribe(
         (oportunidades: OportunidadeSelecionada[]) => this.aplicarResposta(oportunidades),
-        erro => this.tratarErro('Não foi possível carregar as oportunidades selecionadas pelo avaliador de aderência.', erro)
+        erro => this.tratarErro('Não foi possível carregar as oportunidades dos últimos 3 meses.', erro)
       );
   }
 
+  alternarCurriculoEnviado(oportunidade: OportunidadeSelecionada) {
+    if (!oportunidade || !oportunidade.id || oportunidade.atualizandoEnvio) {
+      return;
+    }
+
+    const jaEnviado = this.isCurriculoEnviado(oportunidade);
+    oportunidade.atualizandoEnvio = true;
+    this.erro = '';
+
+    const requisicao = jaEnviado
+      ? this.oportunidadeLinkedinApi.patchAttributes(oportunidade.id, { dataEnvio: null })
+      : this.oportunidadeLinkedinApi.RegistraEnvio(oportunidade.id);
+
+    requisicao.subscribe(
+      () => {
+        oportunidade.dataEnvio = jaEnviado ? undefined : new Date();
+        oportunidade.atualizandoEnvio = false;
+      },
+      erro => {
+        oportunidade.atualizandoEnvio = false;
+        this.tratarErro('Não foi possível atualizar a marcação de currículo enviado.', erro);
+      }
+    );
+  }
+
+  isCurriculoEnviado(oportunidade: OportunidadeSelecionada): boolean {
+    return !!(oportunidade && oportunidade.dataEnvio);
+  }
+
+  getPercentual(valor: number): number {
+    return this.resumoJanela.total > 0 ? Math.round((valor / this.resumoJanela.total) * 100) : 0;
+  }
+
   private aplicarResposta(oportunidades: OportunidadeSelecionada[]) {
-    this.oportunidades = (oportunidades || [])
-      .filter(oportunidade => !this.isModeloPresencialOuHibrido(oportunidade));
+    const oportunidadesJanela = oportunidades || [];
+    const selecionadas = oportunidadesJanela.filter(oportunidade => this.isSelecionada(oportunidade));
+
+    this.resumoJanela = {
+      total: oportunidadesJanela.length,
+      selecionadas: selecionadas.length,
+      descartadas: oportunidadesJanela.filter(oportunidade => this.isDescartada(oportunidade)).length,
+      pendentes: oportunidadesJanela.filter(oportunidade => this.isPendenteAnalise(oportunidade)).length
+    };
+    this.oportunidades = selecionadas;
     this.carregando = false;
   }
 
@@ -49,6 +105,20 @@ export class OportunidadesSelecionadasComponent implements OnInit {
 
   getClasseScore(score: number = 0): string {
     return score >= 85 ? 'score-alto' : 'score-medio';
+  }
+
+  private isSelecionada(oportunidade: OportunidadeSelecionada): boolean {
+    return oportunidade.statusAderencia === 'avaliada'
+      && Number(oportunidade.notaAderencia || 0) >= 70
+      && !this.isModeloPresencialOuHibrido(oportunidade);
+  }
+
+  private isDescartada(oportunidade: OportunidadeSelecionada): boolean {
+    return oportunidade.statusAderencia === 'avaliada' && !this.isSelecionada(oportunidade);
+  }
+
+  private isPendenteAnalise(oportunidade: OportunidadeSelecionada): boolean {
+    return oportunidade.statusAderencia !== 'avaliada';
   }
 
   private isModeloPresencialOuHibrido(oportunidade: OportunidadeSelecionada): boolean {
@@ -72,14 +142,17 @@ export class OportunidadesSelecionadasComponent implements OnInit {
   private getFiltroSelecionadas() {
     return {
       where: {
-        and: [
-          { notaAderencia: { gte: 70 } },
-          { statusAderencia: 'avaliada' },
-          { modelo: { nin: ['Presencial', 'presencial', 'Híbrido', 'Hibrido', 'híbrido', 'hibrido'] } }
-        ]
+        data: { gte: this.getDataInicioJanela() }
       },
-      order: 'notaAderencia DESC',
-      limit: 100
+      order: ['notaAderencia DESC', 'data DESC'],
+      limit: 1000
     };
+  }
+
+  private getDataInicioJanela(): Date {
+    const data = new Date();
+    data.setMonth(data.getMonth() - 3);
+    data.setHours(0, 0, 0, 0);
+    return data;
   }
 }
