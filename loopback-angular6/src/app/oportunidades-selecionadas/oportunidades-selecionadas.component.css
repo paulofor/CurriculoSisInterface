@@ -120,6 +120,17 @@
   color: #a0aec0;
 }
 
+
+.data-coleta,
+.data-avaliacao {
+  white-space: nowrap;
+}
+
+.data-coleta {
+  color: #475569;
+  font-weight: 600;
+}
+
 .score-box {
   align-items: center;
   border-radius: 18px;
