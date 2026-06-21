@@ -1,3 +1,37 @@
 .dgc-card {
     width: 100%;
 }
+
+.score-status {
+    display: inline-block;
+    margin: 8px 0;
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.score-status-ok {
+    background: #e4f7e7;
+    color: #1b6e2d;
+}
+
+.score-status-alerta {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.tag-tecnologia {
+    display: inline-block;
+    margin: 4px 6px 0 0;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: #e8f1ff;
+    color: #245ca8;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.dgc-card-comandos .btn {
+    margin-left: 6px;
+}

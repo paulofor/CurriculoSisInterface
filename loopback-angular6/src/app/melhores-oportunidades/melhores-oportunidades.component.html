@@ -8,7 +8,7 @@
 
   <div class="dgc-painel-principal">
     <div class="alert alert-info" *ngIf="carregando">
-      Analisando oportunidades recentes contra o currículo mestre. Vagas em inglês ou que exigem inglês fluente são ignoradas automaticamente.
+      Analisando oportunidades recentes contra o currículo mestre e os relatos cadastrados em Experiência Profissional. Vagas em inglês ou que exigem inglês fluente são ignoradas automaticamente.
     </div>
 
     <div class="alert alert-danger" *ngIf="erro">
@@ -46,6 +46,15 @@
         <div>
           <strong>Lacunas</strong>
           <p>{{ termosFormatados(item.lacunas) }}</p>
+        </div>
+      </div>
+
+
+      <div class="analise-ia" *ngIf="item.experienciasAderentes && item.experienciasAderentes.length > 0">
+        <strong>Experiências que mais contribuíram</strong>
+        <div *ngFor="let experiencia of item.experienciasAderentes">
+          <p><strong>{{ experiencia.identificador }}</strong> — {{ experiencia.resumo }}</p>
+          <p>Termos aderentes: {{ termosFormatados(experiencia.termosAderentes) }}</p>
         </div>
       </div>
 

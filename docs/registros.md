@@ -61,3 +61,15 @@
 - Corrigido o backend LoopBack para descartar automaticamente callbacks de aderência de oportunidades presenciais ou híbridas, zerando a nota e registrando o motivo na análise, mesmo quando a análise de IA retornaria score alto.
 - A regra usa o campo estruturado `modelo`, a descrição coletada e a análise retornada para impedir que vagas presenciais/híbridas permaneçam entre as selecionadas.
 - Incluída rotina de saneamento na inicialização do backend para retirar das selecionadas oportunidades já avaliadas com nota alta quando `modelo` ou `descricao` indiquem presencial/híbrido.
+
+## 2026-06-21 15:11 (UTC-3)
+- Implementada a Fase 1 de uso dos relatos da tela Experiência Profissional no ranking de oportunidades: o frontend agora envia os relatos recentes junto com as vagas e o serviço de análise consolida esse texto com o currículo mestre para melhorar o cálculo de score, termos aderentes, lacunas e parecer de IA.
+
+## 2026-06-21 15:18 (UTC-3)
+- Implementada a Fase 2 do ranking por relatos profissionais: os relatos agora são enviados com datas e metadados, o serviço pondera termos por recência, destaca termos técnicos fortes, prioriza lacunas fortes e usa a aderência ponderada no score das oportunidades.
+
+## 2026-06-21 15:36 (UTC-3)
+- Implementada a Fase 3 do uso dos relatos profissionais: o serviço agora gera resumos otimizados dos relatos, retorna as experiências mais aderentes para cada oportunidade com termos correspondentes e o frontend exibe essas experiências antes do parecer de IA.
+
+## 2026-06-21 15:40 (UTC-3)
+- Implementada a Fase 4 de interface dos relatos profissionais: a tela Experiência Profissional agora indica se cada relato está apto a entrar no score, exibe tags técnicas detectadas e permite gerar um resumo local otimizado para conferência antes de usar os relatos no ranking.

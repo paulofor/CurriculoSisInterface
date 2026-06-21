@@ -9,6 +9,7 @@ public record OportunidadeCurriculoResponse(
         String recomendacao,
         List<String> termosAderentes,
         List<String> lacunas,
+        List<ExperienciaAderenteResponse> experienciasAderentes,
         String analiseIa
 ) {
 }
