@@ -1,7 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { OportunidadeLinkedin, OportunidadeLinkedinApi } from '../shared/sdk';
+import { ExperienciaProfissionalLivre, ExperienciaProfissionalLivreApi, OportunidadeLinkedin, OportunidadeLinkedinApi } from '../shared/sdk';
+import { forkJoin } from 'rxjs';
 import { ANALISE_OPORTUNIDADES_URL } from '../constantes/base.url';
+
+interface ExperienciaAderenteResponse {
+  identificador: string;
+  resumo: string;
+  termosAderentes: string[];
+}
 
 interface OportunidadeCurriculoResponse {
   titulo: string;
@@ -10,6 +17,7 @@ interface OportunidadeCurriculoResponse {
   recomendacao: string;
   termosAderentes: string[];
   lacunas: string[];
+  experienciasAderentes: ExperienciaAderenteResponse[];
   analiseIa: string;
 }
 
@@ -34,6 +42,7 @@ export class MelhoresOportunidadesComponent implements OnInit {
 
   constructor(
     private oportunidadeLinkedinApi: OportunidadeLinkedinApi,
+    private experienciaProfissionalLivreApi: ExperienciaProfissionalLivreApi,
     private http: HttpClient
   ) { }
 
@@ -47,14 +56,19 @@ export class MelhoresOportunidadesComponent implements OnInit {
     this.oportunidades = [];
     this.oportunidadesIgnoradas = [];
 
-    this.oportunidadeLinkedinApi.find(this.getFiltroOportunidades())
-      .subscribe(
-        (oportunidades: OportunidadeLinkedin[]) => this.analisarOportunidades(oportunidades),
-        erro => this.tratarErro('Não foi possível carregar as oportunidades do LinkedIn.', erro)
-      );
+    forkJoin([
+      this.oportunidadeLinkedinApi.find(this.getFiltroOportunidades()),
+      this.experienciaProfissionalLivreApi.find(this.getFiltroExperiencias())
+    ]).subscribe(
+      resultado => this.analisarOportunidades(
+        resultado[0] as OportunidadeLinkedin[],
+        resultado[1] as ExperienciaProfissionalLivre[]
+      ),
+      erro => this.tratarErro('Não foi possível carregar as oportunidades do LinkedIn e os relatos profissionais.', erro)
+    );
   }
 
-  private analisarOportunidades(oportunidades: OportunidadeLinkedin[]) {
+  private analisarOportunidades(oportunidades: OportunidadeLinkedin[], experiencias: ExperienciaProfissionalLivre[]) {
     if (!oportunidades || oportunidades.length === 0) {
       this.carregando = false;
       return;
@@ -68,7 +82,8 @@ export class MelhoresOportunidadesComponent implements OnInit {
         descricaoOportunidade: item.descricao || item.titulo || '',
         compatibilidade: 40,
         salarioEstimado: 0
-      }))
+      })),
+      relatosExperiencia: this.montarRelatosExperiencia(experiencias)
     };
 
     this.http.post<RankingOportunidadesCurriculoResponse>(ANALISE_OPORTUNIDADES_URL + '/aderentes-curriculo', payload)
@@ -104,6 +119,52 @@ export class MelhoresOportunidadesComponent implements OnInit {
       order: 'data DESC',
       limit: 30
     };
+  }
+
+  private getFiltroExperiencias() {
+    return {
+      order: 'dataInicio DESC',
+      limit: 20
+    };
+  }
+
+  private montarRelatosExperiencia(experiencias: ExperienciaProfissionalLivre[]): any[] {
+    return (experiencias || [])
+      .map(experiencia => this.montarRelatoExperiencia(experiencia))
+      .filter(relato => relato.texto.length > 0);
+  }
+
+  private montarRelatoExperiencia(experiencia: ExperienciaProfissionalLivre): any {
+    if (!experiencia) {
+      return { texto: '' };
+    }
+
+    var texto = [
+      experiencia.cliente,
+      experiencia.consultoria,
+      experiencia.tituloFuncao,
+      experiencia.descricaoLivre,
+      experiencia.principaisTecnologias,
+      experiencia.descricaoGupy
+    ]
+      .filter(valor => !!valor)
+      .join(' ');
+
+    return {
+      texto: texto,
+      dataInicio: this.formatarData(experiencia.dataInicio),
+      dataTermino: this.formatarData(experiencia.dataTermino),
+      cliente: experiencia.cliente,
+      tituloFuncao: experiencia.tituloFuncao
+    };
+  }
+
+  private formatarData(data: Date): any {
+    if (!data) {
+      return undefined;
+    }
+
+    return new Date(data).toISOString().substring(0, 10);
   }
 
   private inferirNivel(item: OportunidadeLinkedin): string {

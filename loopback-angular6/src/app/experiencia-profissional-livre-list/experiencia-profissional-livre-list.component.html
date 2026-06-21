@@ -9,6 +9,9 @@
  				<span>{{item.cliente}} - {{item.consultoria}}</span>
 				<span class="dgc-direita">{{item.dataInicio | date : 'MM/yyyy' : 'UTC'}} até {{item.dataTermino | date : 'MM/yyyy' : 'UTC'}}</span>
  			</div>
+      <div class="score-status" [ngClass]="{'score-status-ok': isUsadoNoScore(item), 'score-status-alerta': !isUsadoNoScore(item)}">
+        {{ getTextoStatusScore(item) }}
+      </div>
 			<div class="dgc-card-detalhe">
 				<span>Descrição:</span><br>
 				<span>{{item.descricaoLivre}}</span>
@@ -17,11 +20,20 @@
 				<span>Tecnologias:</span><br>
 				<span>{{item.principaisTecnologias}}</span>
 			</div>
+      <div class="dgc-card-detalhe" *ngIf="getTagsTecnologia(item).length > 0">
+        <span>Tags detectadas para score:</span><br>
+        <span class="tag-tecnologia" *ngFor="let tag of getTagsTecnologia(item)">{{ tag }}</span>
+      </div>
 			<div class="dgc-card-detalhe">
 				<span>Gupy:</span><br>
 				<span>{{item.descricaoGupy}}</span>
 			</div>
+      <div class="dgc-card-detalhe" *ngIf="getResumoScore(item)">
+        <span>Resumo otimizado para score:</span><br>
+        <span>{{ getResumoScore(item) }}</span>
+      </div>
  			<div class="dgc-card-comandos">
+        <button class="btn-secondary btn-sm btn" (click)="gerarResumoParaScore(item)">Gerar resumo para score</button>
  				<button class="btn-primary btn-sm btn" (click)="edita(item)">Editar</button>
  			</div>
  		</div>
