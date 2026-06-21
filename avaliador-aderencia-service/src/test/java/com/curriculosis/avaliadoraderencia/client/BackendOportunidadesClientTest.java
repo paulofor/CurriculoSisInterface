@@ -32,4 +32,16 @@ class BackendOportunidadesClientTest {
                 .contains("%7B%22where%22%3A")
                 .contains("data+DESC");
     }
+
+    @Test
+    void filtroPendentesIgnoraOportunidadesJaAvaliadas() {
+        String filter = "{\"where\":{\"and\":[{\"descricao\":{\"neq\":null}},{\"maisRecente\":1},{\"or\":[{\"statusAderencia\":{\"neq\":\"avaliada\"}},{\"statusAderencia\":null}]}]},\"order\":\"data DESC\",\"limit\":10}";
+
+        String uri = BackendOportunidadesClient.buildOportunidadesPendentesUri(filter).toString();
+
+        assertThat(uri)
+                .contains("statusAderencia")
+                .contains("avaliada")
+                .contains("%22or%22");
+    }
 }

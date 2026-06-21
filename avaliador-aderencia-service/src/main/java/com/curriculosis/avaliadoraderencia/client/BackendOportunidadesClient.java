@@ -36,7 +36,7 @@ public class BackendOportunidadesClient {
     }
 
     public List<OportunidadeBackend> buscarOportunidadesPendentes(int limite) {
-        String filter = "{\"where\":{\"and\":[{\"descricao\":{\"neq\":null}},{\"maisRecente\":1}]},\"order\":\"data DESC\",\"limit\":" + limite + "}";
+        String filter = "{\"where\":{\"and\":[{\"descricao\":{\"neq\":null}},{\"maisRecente\":1},{\"or\":[{\"statusAderencia\":{\"neq\":\"avaliada\"}},{\"statusAderencia\":null}]}]},\"order\":\"data DESC\",\"limit\":" + limite + "}";
         LOGGER.info("Buscando oportunidades pendentes no backend. baseUrl={}, limite={}, filter={}", backendBaseUrl, limite, filter);
         List<OportunidadeBackend> oportunidades = restClient.get()
                 .uri(buildOportunidadesPendentesUri(filter))
