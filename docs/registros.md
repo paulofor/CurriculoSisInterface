@@ -56,3 +56,8 @@
 
 ## 2026-06-19
 - Reforçada a regra do `analise-oportunidades-service` para descartar oportunidades cujo texto esteja todo em inglês, mesmo quando não há exigência explícita de inglês fluente/avançado, preservando vagas em português com termos técnicos em inglês.
+
+## 2026-06-21 11:55 (UTC)
+- Corrigido o backend LoopBack para descartar automaticamente callbacks de aderência de oportunidades presenciais ou híbridas, zerando a nota e registrando o motivo na análise, mesmo quando a análise de IA retornaria score alto.
+- A regra usa o campo estruturado `modelo`, a descrição coletada e a análise retornada para impedir que vagas presenciais/híbridas permaneçam entre as selecionadas.
+- Incluída rotina de saneamento na inicialização do backend para retirar das selecionadas oportunidades já avaliadas com nota alta quando `modelo` ou `descricao` indiquem presencial/híbrido.
