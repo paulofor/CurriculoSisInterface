@@ -8,6 +8,7 @@ interface OportunidadeSelecionada extends OportunidadeLinkedinInterface {
   dataAvaliacaoAderencia?: Date;
   dataEnvio?: Date;
   atualizandoEnvio?: boolean;
+  quantidadeDuplicadas?: number;
 }
 
 interface ResumoJanelaVagas {
@@ -83,6 +84,10 @@ export class OportunidadesSelecionadasComponent implements OnInit {
     return this.resumoJanela.total > 0 ? Math.round((valor / this.resumoJanela.total) * 100) : 0;
   }
 
+  getQuantidadeDuplicadas(oportunidade: OportunidadeSelecionada): number {
+    return oportunidade && oportunidade.quantidadeDuplicadas ? oportunidade.quantidadeDuplicadas : 1;
+  }
+
   private aplicarResposta(oportunidades: OportunidadeSelecionada[]) {
     const oportunidadesJanela = oportunidades || [];
     const selecionadas = oportunidadesJanela.filter(oportunidade => this.isSelecionada(oportunidade));
@@ -93,8 +98,32 @@ export class OportunidadesSelecionadasComponent implements OnInit {
       descartadas: oportunidadesJanela.filter(oportunidade => this.isDescartada(oportunidade)).length,
       pendentes: oportunidadesJanela.filter(oportunidade => this.isPendenteAnalise(oportunidade)).length
     };
+    this.marcarDuplicadasPorTexto(selecionadas);
     this.oportunidades = selecionadas;
     this.carregando = false;
+  }
+
+
+  private marcarDuplicadasPorTexto(oportunidades: OportunidadeSelecionada[]) {
+    const totaisPorTexto: { [texto: string]: number } = {};
+
+    oportunidades.forEach(oportunidade => {
+      const textoNormalizado = this.getTextoNormalizado(oportunidade);
+      if (textoNormalizado) {
+        totaisPorTexto[textoNormalizado] = (totaisPorTexto[textoNormalizado] || 0) + 1;
+      }
+    });
+
+    oportunidades.forEach(oportunidade => {
+      const textoNormalizado = this.getTextoNormalizado(oportunidade);
+      oportunidade.quantidadeDuplicadas = textoNormalizado ? totaisPorTexto[textoNormalizado] : 1;
+    });
+  }
+
+  private getTextoNormalizado(oportunidade: OportunidadeSelecionada): string {
+    return oportunidade && oportunidade.descricao
+      ? oportunidade.descricao.replace(/\s+/g, ' ').trim().toLowerCase()
+      : '';
   }
 
   private tratarErro(mensagem: string, erro: any) {

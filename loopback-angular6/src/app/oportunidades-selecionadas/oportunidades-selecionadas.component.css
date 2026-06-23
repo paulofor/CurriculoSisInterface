@@ -86,15 +86,31 @@
 }
 
 .posicao {
+  align-items: center;
   background: #e8f2ff;
   border-radius: 999px;
   color: #1769aa;
-  display: inline-block;
+  display: inline-flex;
   font-size: 12px;
+  gap: 6px;
   font-weight: 700;
   margin-bottom: 8px;
   padding: 4px 10px;
 }
+
+.posicao.com-duplicadas {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.posicao small {
+  color: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
 
 .card-topo h3 {
   color: #111827;
