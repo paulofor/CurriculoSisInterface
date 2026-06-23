@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Observable, forkJoin } from 'rxjs';
 import { OportunidadeLinkedinApi, OportunidadeLinkedinInterface } from '../shared/sdk';
 
 interface OportunidadeSelecionada extends OportunidadeLinkedinInterface {
@@ -9,6 +10,8 @@ interface OportunidadeSelecionada extends OportunidadeLinkedinInterface {
   dataEnvio?: Date;
   atualizandoEnvio?: boolean;
   quantidadeDuplicadas?: number;
+  duplicadasMesmoTexto?: OportunidadeSelecionada[];
+  sincronizarDataEnvio?: boolean;
 }
 
 interface ResumoJanelaVagas {
@@ -60,17 +63,25 @@ export class OportunidadesSelecionadasComponent implements OnInit {
     oportunidade.atualizandoEnvio = true;
     this.erro = '';
 
-    const requisicao = jaEnviado
-      ? this.oportunidadeLinkedinApi.patchAttributes(oportunidade.id, { dataEnvio: null })
-      : this.oportunidadeLinkedinApi.RegistraEnvio(oportunidade.id);
+    const duplicadas = this.getDuplicadasMesmoTexto(oportunidade);
+    duplicadas.forEach(item => item.atualizandoEnvio = true);
 
-    requisicao.subscribe(
+    const dataEnvio = jaEnviado ? undefined : new Date();
+    const requisicoes = duplicadas
+      .filter(item => !!item.id)
+      .map(item => jaEnviado
+        ? this.oportunidadeLinkedinApi.patchAttributes(item.id, { dataEnvio: null })
+        : this.oportunidadeLinkedinApi.RegistraEnvio(item.id));
+
+    this.executarRequisicoes(requisicoes).subscribe(
       () => {
-        oportunidade.dataEnvio = jaEnviado ? undefined : new Date();
-        oportunidade.atualizandoEnvio = false;
+        duplicadas.forEach(item => {
+          item.dataEnvio = dataEnvio;
+          item.atualizandoEnvio = false;
+        });
       },
       erro => {
-        oportunidade.atualizandoEnvio = false;
+        duplicadas.forEach(item => item.atualizandoEnvio = false);
         this.tratarErro('Não foi possível atualizar a marcação de currículo enviado.', erro);
       }
     );
@@ -98,26 +109,87 @@ export class OportunidadesSelecionadasComponent implements OnInit {
       descartadas: oportunidadesJanela.filter(oportunidade => this.isDescartada(oportunidade)).length,
       pendentes: oportunidadesJanela.filter(oportunidade => this.isPendenteAnalise(oportunidade)).length
     };
-    this.marcarDuplicadasPorTexto(selecionadas);
-    this.oportunidades = selecionadas;
+    this.oportunidades = this.consolidarDuplicadasPorTexto(selecionadas);
+    this.sincronizarEnvioDuplicadas(this.oportunidades);
     this.carregando = false;
   }
 
-
-  private marcarDuplicadasPorTexto(oportunidades: OportunidadeSelecionada[]) {
-    const totaisPorTexto: { [texto: string]: number } = {};
+  private consolidarDuplicadasPorTexto(oportunidades: OportunidadeSelecionada[]): OportunidadeSelecionada[] {
+    const gruposPorTexto: { [texto: string]: OportunidadeSelecionada[] } = {};
+    const semTexto: OportunidadeSelecionada[] = [];
 
     oportunidades.forEach(oportunidade => {
       const textoNormalizado = this.getTextoNormalizado(oportunidade);
-      if (textoNormalizado) {
-        totaisPorTexto[textoNormalizado] = (totaisPorTexto[textoNormalizado] || 0) + 1;
+      if (!textoNormalizado) {
+        semTexto.push(oportunidade);
+        return;
       }
+      gruposPorTexto[textoNormalizado] = gruposPorTexto[textoNormalizado] || [];
+      gruposPorTexto[textoNormalizado].push(oportunidade);
     });
 
-    oportunidades.forEach(oportunidade => {
-      const textoNormalizado = this.getTextoNormalizado(oportunidade);
-      oportunidade.quantidadeDuplicadas = textoNormalizado ? totaisPorTexto[textoNormalizado] : 1;
+    const consolidadas = Object.keys(gruposPorTexto).map(texto => {
+      const grupo = gruposPorTexto[texto].sort((a, b) => this.getTimestamp(b.data) - this.getTimestamp(a.data));
+      const envio = grupo.find(item => this.isCurriculoEnviado(item));
+      if (envio) {
+        grupo.forEach(item => {
+          item.sincronizarDataEnvio = !this.isCurriculoEnviado(item);
+          item.dataEnvio = envio.dataEnvio;
+        });
+      }
+      const maisRecente = grupo[0];
+      maisRecente.quantidadeDuplicadas = grupo.length;
+      maisRecente.duplicadasMesmoTexto = grupo;
+      return maisRecente;
     });
+
+    semTexto.forEach(oportunidade => {
+      oportunidade.quantidadeDuplicadas = 1;
+      oportunidade.duplicadasMesmoTexto = [oportunidade];
+    });
+
+    return consolidadas
+      .concat(semTexto)
+      .sort((a, b) => Number(b.notaAderencia || 0) - Number(a.notaAderencia || 0) || this.getTimestamp(b.data) - this.getTimestamp(a.data));
+  }
+
+  private sincronizarEnvioDuplicadas(oportunidades: OportunidadeSelecionada[]) {
+    const requisicoes: Observable<any>[] = [];
+
+    oportunidades.forEach(oportunidade => {
+      const duplicadas = this.getDuplicadasMesmoTexto(oportunidade);
+      const envio = duplicadas.find(item => this.isCurriculoEnviado(item));
+      if (!envio || !envio.dataEnvio) {
+        return;
+      }
+      duplicadas
+        .filter(item => !!item.id && item.sincronizarDataEnvio)
+        .forEach(item => requisicoes.push(this.oportunidadeLinkedinApi.patchAttributes(item.id, { dataEnvio: envio.dataEnvio })));
+    });
+
+    if (!requisicoes.length) {
+      return;
+    }
+
+    this.executarRequisicoes(requisicoes).subscribe(
+      () => undefined,
+      erro => this.tratarErro('Não foi possível replicar a marcação de currículo enviado nas oportunidades duplicadas.', erro)
+    );
+  }
+
+
+  private getDuplicadasMesmoTexto(oportunidade: OportunidadeSelecionada): OportunidadeSelecionada[] {
+    return oportunidade && oportunidade.duplicadasMesmoTexto && oportunidade.duplicadasMesmoTexto.length
+      ? oportunidade.duplicadasMesmoTexto
+      : [oportunidade];
+  }
+
+  private executarRequisicoes(requisicoes: Observable<any>[]): Observable<any> {
+    return requisicoes.length > 1 ? forkJoin(requisicoes) : requisicoes[0];
+  }
+
+  private getTimestamp(data: any): number {
+    return data ? new Date(data).getTime() || 0 : 0;
   }
 
   private getTextoNormalizado(oportunidade: OportunidadeSelecionada): string {
