@@ -67,7 +67,7 @@
 
           <div class="acoes-topo">
             <label class="curriculo-enviado" [class.marcado]="isCurriculoEnviado(item)">
-              <input type="checkbox" [checked]="isCurriculoEnviado(item)" [disabled]="item.atualizandoEnvio" (change)="alternarCurriculoEnviado(item)">
+              <input type="checkbox" [checked]="isCurriculoEnviado(item)" [disabled]="item.atualizandoEnvio || item.atualizandoDescarte" (change)="alternarCurriculoEnviado(item)">
               <span>{{ isCurriculoEnviado(item) ? 'currículo enviado' : 'marcar currículo enviado' }}</span>
             </label>
             <div class="score-box" [ngClass]="getClasseScore(item.notaAderencia)">
@@ -86,6 +86,9 @@
         </div>
 
         <div class="card-acoes">
+          <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="item.atualizandoDescarte" (click)="descartarOportunidade(item)">
+            {{ item.atualizandoDescarte ? 'descartando...' : 'descartar vaga' }}
+          </button>
           <a class="btn btn-outline-primary btn-sm" *ngIf="item.url" [href]="item.url" target="_blank" rel="noopener noreferrer">
             abrir oportunidade
           </a>
