@@ -9,6 +9,7 @@ interface OportunidadeSelecionada extends OportunidadeLinkedinInterface {
   dataAvaliacaoAderencia?: Date;
   dataEnvio?: Date;
   atualizandoEnvio?: boolean;
+  atualizandoDescarte?: boolean;
   quantidadeDuplicadas?: number;
   duplicadasMesmoTexto?: OportunidadeSelecionada[];
   sincronizarDataEnvio?: boolean;
@@ -83,6 +84,54 @@ export class OportunidadesSelecionadasComponent implements OnInit {
       erro => {
         duplicadas.forEach(item => item.atualizandoEnvio = false);
         this.tratarErro('Não foi possível atualizar a marcação de currículo enviado.', erro);
+      }
+    );
+  }
+
+  descartarOportunidade(oportunidade: OportunidadeSelecionada) {
+    if (!oportunidade || !oportunidade.id || oportunidade.atualizandoDescarte) {
+      return;
+    }
+
+    const motivo = window.prompt(
+      'Informe, opcionalmente, o motivo para descartar esta vaga:',
+      'Característica da vaga não interessou.'
+    );
+
+    if (motivo === null) {
+      return;
+    }
+
+    const duplicadas = this.getDuplicadasMesmoTexto(oportunidade);
+    duplicadas.forEach(item => item.atualizandoDescarte = true);
+    this.erro = '';
+
+    const motivoNormalizado = (motivo || 'Característica da vaga não interessou.').trim();
+    const requisicoes = duplicadas
+      .filter(item => !!item.id)
+      .map(item => this.oportunidadeLinkedinApi.patchAttributes(item.id, {
+        statusAderencia: 'descartada',
+        notaAderencia: 0,
+        analiseAderenciaIa: this.getAnaliseComDescarteManual(item, motivoNormalizado),
+        dataAvaliacaoAderencia: new Date()
+      }));
+
+    this.executarRequisicoes(requisicoes).subscribe(
+      () => {
+        duplicadas.forEach(item => {
+          item.statusAderencia = 'descartada';
+          item.notaAderencia = 0;
+          item.analiseAderenciaIa = this.getAnaliseComDescarteManual(item, motivoNormalizado);
+          item.dataAvaliacaoAderencia = new Date();
+          item.atualizandoDescarte = false;
+        });
+        this.oportunidades = this.oportunidades.filter(item => item !== oportunidade);
+        this.resumoJanela.selecionadas = Math.max(0, this.resumoJanela.selecionadas - duplicadas.length);
+        this.resumoJanela.descartadas += duplicadas.length;
+      },
+      erro => {
+        duplicadas.forEach(item => item.atualizandoDescarte = false);
+        this.tratarErro('Não foi possível descartar a oportunidade.', erro);
       }
     );
   }
@@ -177,6 +226,14 @@ export class OportunidadesSelecionadasComponent implements OnInit {
     );
   }
 
+  private getAnaliseComDescarteManual(oportunidade: OportunidadeSelecionada, motivo: string): string {
+    const analiseAtual = oportunidade && oportunidade.analiseAderenciaIa ? oportunidade.analiseAderenciaIa.trim() : '';
+    const registroDescarte = 'Descarte manual: ' + motivo;
+
+    return analiseAtual
+      ? analiseAtual + '\n\n' + registroDescarte
+      : registroDescarte;
+  }
 
   private getDuplicadasMesmoTexto(oportunidade: OportunidadeSelecionada): OportunidadeSelecionada[] {
     return oportunidade && oportunidade.duplicadasMesmoTexto && oportunidade.duplicadasMesmoTexto.length
