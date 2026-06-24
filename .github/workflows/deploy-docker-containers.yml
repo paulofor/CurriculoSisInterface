@@ -155,8 +155,25 @@ jobs:
             trap 'rm -f \"$APP_DIR/$DOCKER_IMAGE_ARCHIVE\" \"$APP_DIR/$DOCKER_IMAGE_ARCHIVE.sha256\"' EXIT
             gzip -t '$APP_DIR/$DOCKER_IMAGE_ARCHIVE'
             (cd '$APP_DIR' && sha256sum -c '$DOCKER_IMAGE_ARCHIVE.sha256')
-            docker load -i '$APP_DIR/$DOCKER_IMAGE_ARCHIVE'
             docker compose down --remove-orphans
+
+            # Free the space used by the currently deployed images before
+            # loading the replacement archive. Loading over existing tags makes
+            # Docker keep the old image layers as dangling images during the
+            # import, which can exhaust small VPS disks while unpacking files
+            # such as /app/app.jar. Containers are already stopped above, so the
+            # tagged images can be removed safely and recreated by docker load.
+            docker image rm -f \
+              curriculosis-backend:latest \
+              curriculosis-frontend:latest \
+              curriculosis-mcp-server:latest \
+              curriculosis-analise-oportunidades:latest \
+              curriculosis-avaliador-aderencia:latest \
+              2>/dev/null || true
+            docker image prune -af
+            docker builder prune -af
+
+            docker load -i '$APP_DIR/$DOCKER_IMAGE_ARCHIVE'
 
             # The gateway is the only service expected to publish port 80. On
             # this VPS Apache can be left running by the base image/control
