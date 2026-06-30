@@ -73,3 +73,7 @@
 
 ## 2026-06-21 15:40 (UTC-3)
 - Implementada a Fase 4 de interface dos relatos profissionais: a tela Experiência Profissional agora indica se cada relato está apto a entrar no score, exibe tags técnicas detectadas e permite gerar um resumo local otimizado para conferência antes de usar os relatos no ranking.
+
+## 2026-06-30
+
+- Ajustado o agendamento do `avaliador-aderencia-service` para executar a avaliação automática de oportunidades apenas uma vez por dia, às 06:00 UTC, tanto no padrão da aplicação quanto no `docker-compose.yml`.
